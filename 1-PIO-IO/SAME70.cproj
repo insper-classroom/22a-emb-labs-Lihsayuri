@@ -31,6 +31,12 @@
   <options>
     <option id="common.boards" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.basic.clock" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="common.services.basic.gpio" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="common.services.ioport" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="sam.drivers.mpu" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="sam.drivers.pmc" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="sam.drivers.pio" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="common.services.delay" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.applications.same70_xplained_demo" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.utils.cmsis.same70.source.template" value="Add" config="" content-id="Atmel.ASF" />
   </options>
@@ -210,6 +216,19 @@
     <file path="src/ASF/thirdparty/CMSIS/Lib/license.txt" framework="" version="" source="thirdparty/CMSIS/Lib/license.txt" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/thirdparty/CMSIS/README.txt" framework="" version="" source="thirdparty/CMSIS/README.txt" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/thirdparty/CMSIS/license.txt" framework="" version="" source="thirdparty/CMSIS/license.txt" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/sam/drivers/pio/pio.c" framework="" version="3.42.0" source="sam\drivers\pio\pio.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/sam/drivers/pio/pio.h" framework="" version="3.42.0" source="sam\drivers\pio\pio.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/delay/sam/cycle_counter.c" framework="" version="3.42.0" source="common\services\delay\sam\cycle_counter.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/delay/sam/cycle_counter.h" framework="" version="3.42.0" source="common\services\delay\sam\cycle_counter.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/delay/delay.h" framework="" version="3.42.0" source="common\services\delay\delay.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gpio/sam_gpio/sam_gpio.h" framework="" version="3.42.0" source="common\services\gpio\sam_gpio\sam_gpio.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gpio/gpio.h" framework="" version="3.42.0" source="common\services\gpio\gpio.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/ioport/sam/ioport_pio.h" framework="" version="3.42.0" source="common\services\ioport\sam\ioport_pio.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/ioport/ioport.h" framework="" version="3.42.0" source="common\services\ioport\ioport.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/sam/drivers/mpu/mpu.c" framework="" version="3.42.0" source="sam\drivers\mpu\mpu.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/sam/drivers/mpu/mpu.h" framework="" version="3.42.0" source="sam\drivers\mpu\mpu.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/sam/drivers/pio/pio_handler.c" framework="" version="3.42.0" source="sam\drivers\pio\pio_handler.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/sam/drivers/pio/pio_handler.h" framework="" version="3.42.0" source="sam\drivers\pio\pio_handler.h" changed="False" content-id="Atmel.ASF" />
   </files>
   <documentation help="http://asf.atmel.com/docs/3.32.0/sam.applications.same70_xplained_demo.same70_xplained/html/index.html" />
   <offline-documentation help="" />
@@ -276,6 +295,11 @@
       <Value>../src/ASF/common/boards</Value>
       <Value>../src/ASF/sam/applications/same70_xplained_demo/same70q21_same70_xplained</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pio</Value>
+      <Value>../src/ASF/common/services/delay</Value>
+      <Value>../src/ASF/common/services/gpio</Value>
+      <Value>../src/ASF/common/services/ioport</Value>
+      <Value>../src/ASF/sam/drivers/mpu</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
@@ -315,6 +339,11 @@
       <Value>../src/ASF/common/boards</Value>
       <Value>../src/ASF/sam/applications/same70_xplained_demo/same70q21_same70_xplained</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pio</Value>
+      <Value>../src/ASF/common/services/delay</Value>
+      <Value>../src/ASF/common/services/gpio</Value>
+      <Value>../src/ASF/common/services/ioport</Value>
+      <Value>../src/ASF/sam/drivers/mpu</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.preprocessingassembler.general.AssemblerFlags>-DARM_MATH_CM7=true -DBOARD=SAME70_XPLAINED -D__SAME70Q21__ -Dprintf=iprintf -Dscanf=iscanf</armgcc.preprocessingassembler.general.AssemblerFlags>
@@ -337,6 +366,11 @@
       <Value>../src/ASF/common/boards</Value>
       <Value>../src/ASF/sam/applications/same70_xplained_demo/same70q21_same70_xplained</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pio</Value>
+      <Value>../src/ASF/common/services/delay</Value>
+      <Value>../src/ASF/common/services/gpio</Value>
+      <Value>../src/ASF/common/services/ioport</Value>
+      <Value>../src/ASF/sam/drivers/mpu</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
 </ArmGcc>
@@ -379,6 +413,11 @@
       <Value>../src/ASF/common/boards</Value>
       <Value>../src/ASF/sam/applications/same70_xplained_demo/same70q21_same70_xplained</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pio</Value>
+      <Value>../src/ASF/common/services/delay</Value>
+      <Value>../src/ASF/common/services/gpio</Value>
+      <Value>../src/ASF/common/services/ioport</Value>
+      <Value>../src/ASF/sam/drivers/mpu</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize (-O1)</armgcc.compiler.optimization.level>
@@ -420,6 +459,11 @@
       <Value>../src/ASF/common/boards</Value>
       <Value>../src/ASF/sam/applications/same70_xplained_demo/same70q21_same70_xplained</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pio</Value>
+      <Value>../src/ASF/common/services/delay</Value>
+      <Value>../src/ASF/common/services/gpio</Value>
+      <Value>../src/ASF/common/services/ioport</Value>
+      <Value>../src/ASF/sam/drivers/mpu</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
@@ -443,6 +487,11 @@
       <Value>../src/ASF/common/boards</Value>
       <Value>../src/ASF/sam/applications/same70_xplained_demo/same70q21_same70_xplained</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pio</Value>
+      <Value>../src/ASF/common/services/delay</Value>
+      <Value>../src/ASF/common/services/gpio</Value>
+      <Value>../src/ASF/common/services/ioport</Value>
+      <Value>../src/ASF/sam/drivers/mpu</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
@@ -457,6 +506,12 @@
     <Folder Include="src\ASF\common\services\" />
     <Folder Include="src\ASF\common\services\clock\" />
     <Folder Include="src\ASF\common\services\clock\same70\" />
+    <Folder Include="src\ASF\common\services\delay\" />
+    <Folder Include="src\ASF\common\services\delay\sam\" />
+    <Folder Include="src\ASF\common\services\gpio\" />
+    <Folder Include="src\ASF\common\services\gpio\sam_gpio\" />
+    <Folder Include="src\ASF\common\services\ioport\" />
+    <Folder Include="src\ASF\common\services\ioport\sam\" />
     <Folder Include="src\ASF\common\utils\" />
     <Folder Include="src\ASF\common\utils\interrupt\" />
     <Folder Include="src\ASF\sam\" />
@@ -466,6 +521,8 @@
     <Folder Include="src\ASF\sam\boards\" />
     <Folder Include="src\ASF\sam\boards\same70_xplained\" />
     <Folder Include="src\ASF\sam\drivers\" />
+    <Folder Include="src\ASF\sam\drivers\mpu\" />
+    <Folder Include="src\ASF\sam\drivers\pio\" />
     <Folder Include="src\ASF\sam\drivers\pmc\" />
     <Folder Include="src\ASF\sam\utils\" />
     <Folder Include="src\ASF\sam\utils\cmsis\" />
@@ -951,9 +1008,48 @@
     <Compile Include="src\ASF\common\services\clock\same70\sysclk.c">
       <SubType>compile</SubType>
     </Compile>
+    <None Include="src\ASF\common\services\delay\delay.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\common\services\delay\sam\cycle_counter.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\common\services\delay\sam\cycle_counter.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\common\services\gpio\sam_gpio\sam_gpio.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\common\services\gpio\gpio.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\common\services\ioport\sam\ioport_pio.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\common\services\ioport\ioport.h">
+      <SubType>compile</SubType>
+    </None>
     <Compile Include="src\ASF\common\utils\interrupt\interrupt_sam_nvic.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\ASF\sam\drivers\mpu\mpu.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\sam\drivers\mpu\mpu.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\sam\drivers\pio\pio.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\sam\drivers\pio\pio.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\sam\drivers\pio\pio_handler.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\sam\drivers\pio\pio_handler.h">
+      <SubType>compile</SubType>
+    </None>
     <Compile Include="src\ASF\sam\drivers\pmc\pmc.c">
       <SubType>compile</SubType>
     </Compile>
