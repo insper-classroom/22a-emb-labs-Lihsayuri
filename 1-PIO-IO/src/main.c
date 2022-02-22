@@ -143,9 +143,9 @@ void init(void)
 
 	
 	pio_pull_up(BUT_PIO, BUT_PIO_IDX_MASK, 0);
-	pio_pull_up(BUT1_PIO, BUT1_PIO_IDX_MASK, 0);
-	pio_pull_up(BUT2_PIO, BUT2_PIO_IDX_MASK, 0);
-	pio_pull_up(BUT3_PIO, BUT3_PIO_IDX_MASK, 0);
+	pio_pull_up(BUT1_PIO, BUT1_PIO_IDX_MASK, 1);
+	pio_pull_up(BUT2_PIO, BUT2_PIO_IDX_MASK, 1);
+	pio_pull_up(BUT3_PIO, BUT3_PIO_IDX_MASK, 1);
 
 
 	
@@ -167,14 +167,17 @@ int main(void)
 	while(1){
 		int resultPio;
 		int resultPioBut1;
+		int resultPioBut2;
+		int resultPioBut3;
+
 		//int resultPioBut2;
 		resultPio = pio_get(BUT_PIO, PIO_INPUT, BUT_PIO_IDX_MASK);
 		resultPioBut1 = pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK);
-		//resultPioBut2 = pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK);
+		resultPioBut2 = pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK);
+		resultPioBut3 = pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK);
 
 
-
-		if (resultPioBut1 == 0){
+		if (!resultPioBut1){
 			for (int i = 0; i < 5; i++ )
 			{
 				pio_set(PIOA, LED1_PIO_IDX_MASK);      // Coloca 1 no pino LED
@@ -187,14 +190,9 @@ int main(void)
 
 		}
 		
-	}
-	
-	while(1){
-		int resultPioBut2;
-		resultPioBut2 = pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK);
-
-		if (resultPioBut2 == 0){
-			for (int j = 0; j < 5; j++ )
+		
+	  else if (!resultPioBut2){
+			for (int j = 0; j < 5; j++)
 			{
 				pio_set(PIOC, LED2_PIO_IDX_MASK);      // Coloca 1 no pino LED
 				delay_ms(100);                        // Delay por software de 200 ms
@@ -205,14 +203,8 @@ int main(void)
 			pio_set(PIOC, LED2_PIO_IDX_MASK);      // Coloca 1 no pino LED
 
 		}
-	}
 	
-	while(1){
-		int resultPioBut3;
-
-		resultPioBut3 = pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK);
-
-		if (resultPioBut3 == 0){
+	 else if(!resultPioBut3){
 			for (int z = 0; z < 5; z++ )
 			{
 				pio_set(PIOB, LED3_PIO_IDX_MASK);      // Coloca 1 no pino LED
