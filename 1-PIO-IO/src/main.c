@@ -142,7 +142,7 @@ void init(void)
 
 
 	
-	pio_pull_up(BUT_PIO, BUT_PIO_IDX_MASK, 0);
+	pio_pull_up(BUT_PIO, BUT_PIO_IDX_MASK, 1);
 	pio_pull_up(BUT1_PIO, BUT1_PIO_IDX_MASK, 1);
 	pio_pull_up(BUT2_PIO, BUT2_PIO_IDX_MASK, 1);
 	pio_pull_up(BUT3_PIO, BUT3_PIO_IDX_MASK, 1);
@@ -176,14 +176,26 @@ int main(void)
 		resultPioBut2 = pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK);
 		resultPioBut3 = pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK);
 
+		if (!resultPio){
+			for (int l = 0; l < 5; l++ )
+			{
+				pio_set(PIOC, LED_PIO_IDX_MASK);      // Coloca 1 no pino LED
+				delay_ms(1000);                        // Delay por software de 200 ms
+				pio_clear(PIOC, LED_PIO_IDX_MASK);    // Coloca 0 no pino do LED
+				delay_ms(1000);                        // Delay por software de 200 ms
+			}
 
-		if (!resultPioBut1){
+			pio_set(PIOC, LED_PIO_IDX_MASK);      // Coloca 1 no pino LED
+		}
+
+
+		else if (!resultPioBut1){
 			for (int i = 0; i < 5; i++ )
 			{
 				pio_set(PIOA, LED1_PIO_IDX_MASK);      // Coloca 1 no pino LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				delay_ms(1000);                        // Delay por software de 200 ms
 				pio_clear(PIOA, LED1_PIO_IDX_MASK);    // Coloca 0 no pino do LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				delay_ms(1000);                        // Delay por software de 200 ms
 			} 
 			
 			pio_set(PIOA, LED1_PIO_IDX_MASK);      // Coloca 1 no pino LED
@@ -195,9 +207,9 @@ int main(void)
 			for (int j = 0; j < 5; j++)
 			{
 				pio_set(PIOC, LED2_PIO_IDX_MASK);      // Coloca 1 no pino LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				delay_ms(1000);                        // Delay por software de 200 ms
 				pio_clear(PIOC, LED2_PIO_IDX_MASK); // Coloca 0 no pino do LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				delay_ms(1000);                        // Delay por software de 200 ms
 			}
 					
 			pio_set(PIOC, LED2_PIO_IDX_MASK);      // Coloca 1 no pino LED
@@ -208,14 +220,15 @@ int main(void)
 			for (int z = 0; z < 5; z++ )
 			{
 				pio_set(PIOB, LED3_PIO_IDX_MASK);      // Coloca 1 no pino LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				delay_ms(1000);                        // Delay por software de 200 ms
 				pio_clear(PIOB, LED3_PIO_IDX_MASK);    // Coloca 0 no pino do LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				delay_ms(1000);                        // Delay por software de 200 ms
 			}
 			
 			pio_set(PIOB, LED3_PIO_IDX_MASK);      // Coloca 1 no pino LED
 
 		}
+		
 		
 	}
 	
