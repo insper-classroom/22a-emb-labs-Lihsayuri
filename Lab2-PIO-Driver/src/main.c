@@ -13,15 +13,11 @@
 *  - Kit: ATMEL SAME70-XPLD - ARM CORTEX M7
 */
 
-/************************************************************************/
-/* includes                                                             */
-/************************************************************************/
 
 #include "asf.h"
 
-/************************************************************************/
-/* defines                                                              */
-/************************************************************************/
+//defines                                                              
+
 
 //Definindo tudo do LED da placa: 
 #define LED_PIO           PIOC                 // periferico que controla o LED
@@ -87,40 +83,18 @@
 
 void init(void);
 
-/**
- * \brief Set a high output level on all the PIOs defined in ul_mask.
- * This has no immediate effects on PIOs that are not output, but the PIO
- * controller will save the value if they are changed to outputs.
- *
- * \param p_pio Pointer to a PIO instance.
- * \param ul_mask Bitmask of one or more pin(s) to configure.
- */
 void _pio_set(Pio *p_pio, const uint32_t ul_mask)
 {
 	 p_pio->PIO_SODR = ul_mask;
 }
 
-/**
- * \brief Set a low output level on all the PIOs defined in ul_mask.
- * This has no immediate effects on PIOs that are not output, but the PIO
- * controller will save the value if they are changed to outputs.
- *
- * \param p_pio Pointer to a PIO instance.
- * \param ul_mask Bitmask of one or more pin(s) to configure.
- */
+
 void _pio_clear(Pio *p_pio, const uint32_t ul_mask)
 {
 	p_pio->PIO_CODR = ul_mask;
 }
 
-/**
- * \brief Configure PIO internal pull-up.
- *
- * \param p_pio Pointer to a PIO instance.
- * \param ul_mask Bitmask of one or more pin(s) to configure.
- * \param ul_pull_up_enable Indicates if the pin(s) internal pull-up shall be
- * configured.
- */
+
 void _pio_pull_up(Pio *p_pio, const uint32_t ul_mask, const uint32_t ul_pull_up_enable)
 {
 	if (ul_pull_up_enable){
@@ -130,40 +104,66 @@ void _pio_pull_up(Pio *p_pio, const uint32_t ul_mask, const uint32_t ul_pull_up_
 	}
 
  }
- 
+
 
 void _pio_set_input(Pio *p_pio, const uint32_t ul_mask, const uint32_t ul_attribute)
 {
+	//The level on each I/O line can be read through PIO_PDSR. This register indicates the level of the I/O lines
+	//regardless of their configuration, whether uniquely as an input, or driven by the PIO Controller, or driven by a
+	//peripheral.
+	//Reading the I/O line levels requires the clock of the PIO Controller to be enabled, otherwise PIO_PDSR reads the
+	//levels present on the I/O line at the time the clock was disabled.
+	
 	_pio_pull_up(p_pio, ul_mask, (ul_attribute & _PIO_PULLUP) );
 	
+	if (ul_attribute & PIO_DEGLITCH) {
+		p_pio->PIO_IFSCDR = ul_mask; // quando tá disable, ou seja, IFSCSR é 0, ativa o deglitch
+		} else {
+			if (ul_attribute & PIO_DEBOUNCE) { //quando tá enable, ou seja, IFSCSR é 1, ativa o debounce
+				p_pio->PIO_IFSCER = ul_mask;
+			}
+		}
+		
+	//The glitch filters are controlled by the Input Filter Enable Register (PIO_IFER), the Input Filter Disable Register
+	//(PIO_IFDR) and the Input Filter Status Register (PIO_IFSR). Writing PIO_IFER and PIO_IFDR respectively sets
+	//and clears bits in PIO_IFSR. This last register enables the glitch filter on the I/O lines
+		
 	if (ul_attribute & (_PIO_DEBOUNCE|_PIO_DEGLITCH)){
 		p_pio -> PIO_IFER = ul_mask;
-	} else{
+		} else{
 		p_pio -> PIO_IFDR = ul_mask;
 	}
+	
+	p_pio->PIO_PER = ul_mask; // Quando o PIO_PER = 1: : Enables the PIO to control the corresponding pin (disables peripheral control of the pin).
+	p_pio->PIO_ODR = ul_mask;  //Quando o PIO_ODR = 1: Disables the output on the I/O line, ou seja, é um INPUT. 
 }
 
 
 void _pio_set_output(Pio *p_pio, const uint32_t ul_mask, const uint32_t ul_default_level, const uint32_t ul_multidrive_enable, const uint32_t ul_pull_up_enable)
 {
-	_pio_pull_up(p_pio, ul_mask, ul_pull_up_enable);
+	_pio_pull_up(p_pio, ul_mask, ul_pull_up_enable); // Ativa ou não o Pull- up.
 	
+	// Define a saída inicial do pino
 	if (ul_default_level){
-		p_pio -> PIO_SODR = ul_mask;
+		//Se o PIO_SODR = 1: Sets the data to be driven on the I/O line.
+		_pio_set(p_pio, ul_mask);
 	} else{
-		p_pio -> PIO_CODR = ul_mask;
+		// Se o PIO_CODR = 1: Clears the data to be driven on the I/O line.
+		_pio_clear(p_pio, ul_mask);
 	}
 	
+	// Ativa ou não o multidrive:
 	if (ul_multidrive_enable){
 		p_pio -> PIO_MDER = ul_mask;
 	} else{
 		p_pio -> PIO_MDDR = ul_mask;
 	}
 	
-	p_pio->PIO_OER = ul_mask;
-	p_pio->PIO_PER = ul_mask;
+	p_pio->PIO_OER = ul_mask;  //Quando o PIO_OER = 1: Enables the output on the I/O line. 
+	p_pio->PIO_PER = ul_mask; // Quando o PIO_PER = 1: : Enables the PIO to control the corresponding pin (disables peripheral control of the pin).
 	
 }
+
 
 uint32_t _pio_get(Pio *p_pio, const pio_type_t ul_type, const uint32_t ul_mask)
 {
@@ -171,14 +171,14 @@ uint32_t _pio_get(Pio *p_pio, const pio_type_t ul_type, const uint32_t ul_mask)
 
 	if (ul_type == PIO_OUTPUT_0) {
 		
-		input_or_output = p_pio->PIO_ODSR;
+		input_or_output = p_pio->PIO_ODSR; //  write operations set and clear the Output Data Status Register (PIO_ODSR).
 		} else {
-		input_or_output = p_pio->PIO_PDSR;
+		input_or_output = p_pio->PIO_PDSR;  // The level on each I/O line can be read through PIO_PDSR. -> Input
 	}
 
 	if ((input_or_output & ul_mask) == 0) {
 		return 0;
-		} else {
+	} else {
 		return 1;
 	}
 }
@@ -186,7 +186,6 @@ uint32_t _pio_get(Pio *p_pio, const pio_type_t ul_type, const uint32_t ul_mask)
 void _delay_ms(int ms){
 	//clock_t begin = clock();
 
-	/* here, do your time-consuming job */
 	 //ms*1000000
 	 // ms*50000
 	for (int i = 0; i < ms*150000 ; i++){
@@ -239,9 +238,9 @@ void init(void)
 	
 	// configura pino ligado ao botão como entrada com um pull-up.
 	_pio_set_input(BUT_PIO, BUT_PIO_IDX_MASK,  _PIO_PULLUP | _PIO_DEBOUNCE);
-	_pio_set_input(BUT1_PIO, BUT1_PIO_IDX_MASK, PIO_DEFAULT);
-	_pio_set_input(BUT2_PIO, BUT2_PIO_IDX_MASK, PIO_DEFAULT);
-	_pio_set_input(BUT3_PIO, BUT3_PIO_IDX_MASK, PIO_DEFAULT);
+	_pio_set_input(BUT1_PIO, BUT1_PIO_IDX_MASK, _PIO_PULLUP | _PIO_DEBOUNCE);
+	_pio_set_input(BUT2_PIO, BUT2_PIO_IDX_MASK, _PIO_PULLUP | _PIO_DEBOUNCE);
+	_pio_set_input(BUT3_PIO, BUT3_PIO_IDX_MASK, _PIO_PULLUP | _PIO_DEBOUNCE);
 
 
 
