@@ -106,13 +106,7 @@ void _pio_pull_up(Pio *p_pio, const uint32_t ul_mask, const uint32_t ul_pull_up_
  }
 
 void _pio_set_input(Pio *p_pio, const uint32_t ul_mask, const uint32_t ul_attribute)
-{
-	//The level on each I/O line can be read through PIO_PDSR. This register indicates the level of the I/O lines
-	//regardless of their configuration, whether uniquely as an input, or driven by the PIO Controller, or driven by a
-	//peripheral.
-	//Reading the I/O line levels requires the clock of the PIO Controller to be enabled, otherwise PIO_PDSR reads the
-	//levels present on the I/O line at the time the clock was disabled.
-	
+{	
 	_pio_pull_up(p_pio, ul_mask, (ul_attribute & _PIO_PULLUP) );
 	
 	if (ul_attribute & PIO_DEGLITCH) {
@@ -121,9 +115,6 @@ void _pio_set_input(Pio *p_pio, const uint32_t ul_mask, const uint32_t ul_attrib
 				p_pio->PIO_IFSCER = ul_mask;
 		}
 		
-	//The glitch filters are controlled by the Input Filter Enable Register (PIO_IFER), the Input Filter Disable Register
-	//(PIO_IFDR) and the Input Filter Status Register (PIO_IFSR). Writing PIO_IFER and PIO_IFDR respectively sets
-	//and clears bits in PIO_IFSR. This last register enables the glitch filter on the I/O lines
 		
 	if (ul_attribute & (_PIO_DEBOUNCE|_PIO_DEGLITCH)){
 		p_pio -> PIO_IFER = ul_mask;
@@ -173,7 +164,7 @@ uint32_t _pio_get(Pio *p_pio, const pio_type_t ul_type, const uint32_t ul_mask)
 		input_or_output = p_pio->PIO_PDSR;  // The level on each I/O line can be read through PIO_PDSR. -> Input
 	}
 
-	if ((input_or_output & ul_mask) == 0) {
+	if ((input_or_output & ul_mask) == 0) {  // aplica a mascara para pegar o pino exato que quero ver o status.
 		return 0;
 	} else {
 		return 1;
@@ -181,20 +172,11 @@ uint32_t _pio_get(Pio *p_pio, const pio_type_t ul_type, const uint32_t ul_mask)
 }
 
 void _delay_ms(int ms){
-	 //ms*1000000
-	 // ms*50000
-	//for (int i = 0; i < ms*150000 ; i++){  // to run a loop it takes aprox 2 mS. If CORE CORTEX 300MHz. 300.000 clocks - 1ms. In 2 mS - 150.000 clocks.
-		//asm("NOP");
-	//}
-	//
-	//((delay) ? cpu_delay_ms(delay, F_CPU) : cpu_delay_us(1, F_CPU))
-	
-	if (ms > 0){
-		cpu_delay_ms(ms, F_CPU);
-	} 
-	
-}
 
+	for (int i = 0; i < ms*150000 ; i++){  
+		asm("NOP");
+	}	
+}
 
 // Função de inicialização do uC
 void init(void)
@@ -236,17 +218,11 @@ void init(void)
 	_pio_set_input(BUT2_PIO, BUT2_PIO_IDX_MASK, _PIO_PULLUP | _PIO_DEBOUNCE);
 	_pio_set_input(BUT3_PIO, BUT3_PIO_IDX_MASK, _PIO_PULLUP | _PIO_DEBOUNCE);
 
-
-
 	
 	//_pio_pull_up(BUT_PIO, BUT_PIO_IDX_MASK, 1);
 	//_pio_pull_up(BUT1_PIO, BUT1_PIO_IDX_MASK, 1);
 	//_pio_pull_up(BUT2_PIO, BUT2_PIO_IDX_MASK, 1);
 	//_pio_pull_up(BUT3_PIO, BUT3_PIO_IDX_MASK, 1);
-
-
-	
-
 }
 
 
@@ -287,9 +263,9 @@ int main(void)
 			for (int i = 0; i < 5; i++ )
 			{
 				_pio_set(PIOA, LED1_PIO_IDX_MASK);      // Coloca 1 no pino LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				_delay_ms(100);                        // Delay por software de 200 ms
 				_pio_clear(PIOA, LED1_PIO_IDX_MASK);    // Coloca 0 no pino do LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				_delay_ms(100);                        // Delay por software de 200 ms
 			} 
 			
 			_pio_set(PIOA, LED1_PIO_IDX_MASK);      // Coloca 1 no pino LED
@@ -301,9 +277,9 @@ int main(void)
 			for (int j = 0; j < 5; j++)
 			{
 				_pio_set(PIOC, LED2_PIO_IDX_MASK);      // Coloca 1 no pino LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				_delay_ms(100);                        // Delay por software de 200 ms
 				_pio_clear(PIOC, LED2_PIO_IDX_MASK); // Coloca 0 no pino do LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				_delay_ms(100);                        // Delay por software de 200 ms
 			}
 					
 			_pio_set(PIOC, LED2_PIO_IDX_MASK);      // Coloca 1 no pino LED
@@ -314,9 +290,9 @@ int main(void)
 			for (int z = 0; z < 5; z++ )
 			{
 				_pio_set(PIOB, LED3_PIO_IDX_MASK);      // Coloca 1 no pino LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				_delay_ms(100);                        // Delay por software de 200 ms
 				_pio_clear(PIOB, LED3_PIO_IDX_MASK);    // Coloca 0 no pino do LED
-				delay_ms(100);                        // Delay por software de 200 ms
+				_delay_ms(100);                        // Delay por software de 200 ms
 			}
 			
 			_pio_set(PIOB, LED3_PIO_IDX_MASK);      // Coloca 1 no pino LED
