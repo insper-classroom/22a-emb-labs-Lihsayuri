@@ -105,7 +105,6 @@ void _pio_pull_up(Pio *p_pio, const uint32_t ul_mask, const uint32_t ul_pull_up_
 
  }
 
-
 void _pio_set_input(Pio *p_pio, const uint32_t ul_mask, const uint32_t ul_attribute)
 {
 	//The level on each I/O line can be read through PIO_PDSR. This register indicates the level of the I/O lines
@@ -118,10 +117,8 @@ void _pio_set_input(Pio *p_pio, const uint32_t ul_mask, const uint32_t ul_attrib
 	
 	if (ul_attribute & PIO_DEGLITCH) {
 		p_pio->PIO_IFSCDR = ul_mask; // quando tá disable, ou seja, IFSCSR é 0, ativa o deglitch
-		} else {
-			if (ul_attribute & PIO_DEBOUNCE) { //quando tá enable, ou seja, IFSCSR é 1, ativa o debounce
+	} else if (ul_attribute & PIO_DEBOUNCE) { //quando tá enable, ou seja, IFSCSR é 1, ativa o debounce
 				p_pio->PIO_IFSCER = ul_mask;
-			}
 		}
 		
 	//The glitch filters are controlled by the Input Filter Enable Register (PIO_IFER), the Input Filter Disable Register
@@ -184,22 +181,19 @@ uint32_t _pio_get(Pio *p_pio, const pio_type_t ul_type, const uint32_t ul_mask)
 }
 
 void _delay_ms(int ms){
-	//clock_t begin = clock();
-
 	 //ms*1000000
 	 // ms*50000
-	for (int i = 0; i < ms*150000 ; i++){
-		asm("NOP");
-	}
-
-	//clock_t end = clock();
-	//double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-	//printf("time spent : %f ", time_spent);
+	//for (int i = 0; i < ms*150000 ; i++){  // to run a loop it takes aprox 2 mS. If CORE CORTEX 300MHz. 300.000 clocks - 1ms. In 2 mS - 150.000 clocks.
+		//asm("NOP");
+	//}
+	//
+	//((delay) ? cpu_delay_ms(delay, F_CPU) : cpu_delay_us(1, F_CPU))
 	
+	if (ms > 0){
+		cpu_delay_ms(ms, F_CPU);
+	} 
 	
 }
-
-
 
 
 // Função de inicialização do uC
@@ -246,9 +240,9 @@ void init(void)
 
 	
 	//_pio_pull_up(BUT_PIO, BUT_PIO_IDX_MASK, 1);
-	_pio_pull_up(BUT1_PIO, BUT1_PIO_IDX_MASK, 1);
-	_pio_pull_up(BUT2_PIO, BUT2_PIO_IDX_MASK, 1);
-	_pio_pull_up(BUT3_PIO, BUT3_PIO_IDX_MASK, 1);
+	//_pio_pull_up(BUT1_PIO, BUT1_PIO_IDX_MASK, 1);
+	//_pio_pull_up(BUT2_PIO, BUT2_PIO_IDX_MASK, 1);
+	//_pio_pull_up(BUT3_PIO, BUT3_PIO_IDX_MASK, 1);
 
 
 	
