@@ -204,19 +204,27 @@ void main(void)
 	{
 		if (but1_flag || but3_flag || but2_flag){  // se qualquer botão for apertado, ele começa a fazer as conferências.
 			for (int i = 0; i < 10000000; i++){
+				if (but3_flag){
+					frequencia -= 100;
+					delay_ms(300);
+					draw_frequency(frequencia);
+					break;
+				}
 				if (pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
 					if((!pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK)) && i >= 1000000){
-						frequencia+=100;
+						frequencia-=100;
 						delay_ms(300);
 						draw_frequency(frequencia);
 						break;
-					} else if ((pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK) || (!pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK)) && i < 1000000 )){
-						frequencia-=100;
+					} else if (pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK) && i < 1000000 ){
+						frequencia+=100;
 						delay_ms(200);
 						draw_frequency(frequencia);
 						break;
 					} 
-				} else{
+				
+				}
+				 else{
 					delay_ms(200);
 					but2_flag = 0;
 					pisca_led(30, frequencia);
