@@ -45,18 +45,31 @@
 #define LED3_PIO_IDX_MASK  (1 << LED3_PIO_IDX)   // Mascara para CONTROLARMOS o LED
 
 
-volatile char but_flag; // variável global
+volatile char but1_flag; // variável global
+volatile char but2_flag; // variável global
+volatile char but3_flag; // variável global
+
 volatile int frequencia;
-volatile int but2_not_pressed;
 
 void io_init(void);
 void pisca_led(int n, int t);
 
 
-void but_callback(void)
+void but1_callback(void)
 {
-	but_flag = 1;
+	but1_flag = 1;
 }
+
+void but2_callback(void)
+{
+	but2_flag = 1;
+}
+
+void but3_callback(void)
+{
+	but3_flag = 1;
+}
+
 
 /************************************************************************/
 /* funções                                                              */
@@ -70,25 +83,22 @@ void pisca_led(int n, int t){
 	int y = 16;
 	gfx_mono_generic_draw_filled_rect(x+1, y+1, 31, 9, GFX_PIXEL_CLR);
 	gfx_mono_generic_draw_rect(x, y, 32, 10, GFX_PIXEL_SET);
-	for (int i=1;i<=n;){
-		if (but2_not_pressed){   
+	for (int i=1;i<=n;){   
 			pio_clear(LED2_PIO, LED2_PIO_IDX_MASK);
 			gfx_mono_generic_draw_vertical_line(x+i, 16, 10, GFX_PIXEL_SET);
 			delay_ms(t);
 			pio_set(LED2_PIO, LED2_PIO_IDX_MASK);
 			delay_ms(t);
 			i++;
-			if(!pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
-				but2_not_pressed = 0;
+			if (but2_flag){
 				frequencia = frequencia;
 				delay_ms(200);
 				return;
 			}
-		}
-	}
-	
-	
+		} 
 }
+	
+
 
 // Inicializa botao SW0 do kit com interrupcao
 void io_init(void)
@@ -122,19 +132,19 @@ void io_init(void)
 	BUT1_PIO_ID,
 	BUT1_PIO_IDX_MASK,
 	PIO_IT_FALL_EDGE,
-	but_callback);
+	but1_callback);
 
 	pio_handler_set(BUT2_PIO,
 	BUT2_PIO_ID,
 	BUT2_PIO_IDX_MASK,
 	PIO_IT_FALL_EDGE,
-	but_callback);
+	but2_callback);
 	
 	pio_handler_set(BUT3_PIO,
 	BUT3_PIO_ID,
 	BUT3_PIO_IDX_MASK,
 	PIO_IT_FALL_EDGE,
-	but_callback);
+	but3_callback);
 
 	//PIO_IT_RISE_EDGE, PIO_IT_FALL_EDGE
 	// Ativa interrupção e limpa primeira IRQ gerada na ativacao
@@ -197,7 +207,7 @@ void main(void)
 	
 	while(1)
 	{
-		if (but_flag){
+		if (but1_flag){
 			//while((!pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK)) || (!pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK)) || (!pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)) ){
 			for (int i = 0; i < 10000000; i++){
 				if (pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
@@ -210,12 +220,11 @@ void main(void)
 						frequencia-=100;
 						delay_ms(200);
 						draw_frequency(frequencia);
-						but2_not_pressed = 1;
 						break;
 					} 
 				} else{
-					but2_not_pressed = 1;
 					delay_ms(200);
+					but2_flag = 0;
 					pisca_led(30, frequencia);
 					break;
 				}
