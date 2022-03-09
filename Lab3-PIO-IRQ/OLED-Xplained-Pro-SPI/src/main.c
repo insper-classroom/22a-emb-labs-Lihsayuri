@@ -47,7 +47,7 @@
 
 volatile char but_flag; // variável global
 volatile int frequencia;
-volatile int but1_pressed;
+volatile int but2_not_pressed;
 
 void io_init(void);
 void pisca_led(int n, int t);
@@ -71,7 +71,7 @@ void pisca_led(int n, int t){
 	gfx_mono_generic_draw_filled_rect(x+1, y+1, 31, 9, GFX_PIXEL_CLR);
 	gfx_mono_generic_draw_rect(x, y, 32, 10, GFX_PIXEL_SET);
 	for (int i=1;i<=n;){
-		if (but1_pressed){
+		if (but2_not_pressed){   
 			pio_clear(LED2_PIO, LED2_PIO_IDX_MASK);
 			gfx_mono_generic_draw_vertical_line(x+i, 16, 10, GFX_PIXEL_SET);
 			delay_ms(t);
@@ -79,17 +79,11 @@ void pisca_led(int n, int t){
 			delay_ms(t);
 			i++;
 			if(!pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
-				but1_pressed = 0;
+				but2_not_pressed = 0;
 				frequencia = frequencia;
-				delay_ms(700);
+				delay_ms(200);
 				return;
 			}
-		}
-		if(!pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
-			but1_pressed = 0;
-			frequencia = frequencia;
-			delay_ms(200);
-			return;
 		}
 	}
 	
@@ -127,19 +121,19 @@ void io_init(void)
 	pio_handler_set(BUT1_PIO,
 	BUT1_PIO_ID,
 	BUT1_PIO_IDX_MASK,
-	PIO_IT_EDGE,
+	PIO_IT_FALL_EDGE,
 	but_callback);
 
 	pio_handler_set(BUT2_PIO,
 	BUT2_PIO_ID,
 	BUT2_PIO_IDX_MASK,
-	PIO_IT_EDGE,
+	PIO_IT_FALL_EDGE,
 	but_callback);
 	
 	pio_handler_set(BUT3_PIO,
 	BUT3_PIO_ID,
 	BUT3_PIO_IDX_MASK,
-	PIO_IT_EDGE,
+	PIO_IT_FALL_EDGE,
 	but_callback);
 
 	//PIO_IT_RISE_EDGE, PIO_IT_FALL_EDGE
@@ -200,37 +194,34 @@ void main(void)
 	draw_frequency(frequencia);
 	// super loop
 	// aplicacoes embarcadas no devem sair do while(1).
-	int but2_pressed = 0;
 	
 	while(1)
 	{
 		if (but_flag){
 			//while((!pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK)) || (!pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK)) || (!pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)) ){
-				for (int i = 0; i < 10000000; i++){
-					if (!pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK) && i < 1000000){
-						frequencia-=100;
-						delay_ms(200);
-						draw_frequency(frequencia);
-						break;
-					} else if((!pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK)) && i >= 1000000 && pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK) ){
+			for (int i = 0; i < 10000000; i++){
+				if (pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
+					if((!pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK)) && i >= 1000000){
 						frequencia+=100;
-						delay_ms(700);
+						delay_ms(300);
 						draw_frequency(frequencia);
 						break;
-					} else if ((pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK)) && i < 1000000 && pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK) && pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
+					} else if ((pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK) || (!pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK)) && i < 1000000 )){
 						frequencia-=100;
 						delay_ms(200);
 						draw_frequency(frequencia);
+						but2_not_pressed = 1;
 						break;
-					} else if (!pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
-						but1_pressed = 1;
-						delay_ms(200);
-						pisca_led(30, frequencia);
-						break;
-					}
-				
+					} 
+				} else{
+					but2_not_pressed = 1;
+					delay_ms(200);
+					pisca_led(30, frequencia);
+					break;
 				}
 				
+			}
+			
 				
 				draw_frequency(frequencia);
 			//}
@@ -238,7 +229,9 @@ void main(void)
 			//but_flag = 0;
 		}
 		pmc_sleep(SAM_PM_SMODE_SLEEP_WFI); //utilizar somente o modo sleep mode
+	
 	}
+
 }
 
 
