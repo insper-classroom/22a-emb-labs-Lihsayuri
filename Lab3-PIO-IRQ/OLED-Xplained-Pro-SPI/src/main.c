@@ -189,10 +189,6 @@ void main(void)
 
 	// Init OLED
 	gfx_mono_ssd1306_init();
-	// Escreve na tela um circulo e um texto
-	//gfx_mono_draw_filled_circle(20, 16, 16, GFX_PIXEL_SET, GFX_WHOLE);
-	//gfx_mono_draw_string("Yay :)", 50,16, &sysfont);
-
 
 	// Desativa watchdog
 	WDT->WDT_MR = WDT_MR_WDDIS;
@@ -202,13 +198,11 @@ void main(void)
 	
 	frequencia = 500;
 	draw_frequency(frequencia);
-	// super loop
 	// aplicacoes embarcadas no devem sair do while(1).
 	
 	while(1)
 	{
-		if (but1_flag){
-			//while((!pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK)) || (!pio_get(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK)) || (!pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)) ){
+		if (but1_flag || but3_flag || but2_flag){  // se qualquer botão for apertado, ele começa a fazer as conferências.
 			for (int i = 0; i < 10000000; i++){
 				if (pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
 					if((!pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK)) && i >= 1000000){
@@ -229,13 +223,13 @@ void main(void)
 					break;
 				}
 				
-			}
+			} 
 			
-				
-				draw_frequency(frequencia);
-			//}
-			
-			//but_flag = 0;
+			draw_frequency(frequencia);
+			but1_flag = 0;
+			but2_flag = 0;
+			but3_flag = 0;
+		
 		}
 		pmc_sleep(SAM_PM_SMODE_SLEEP_WFI); //utilizar somente o modo sleep mode
 	
