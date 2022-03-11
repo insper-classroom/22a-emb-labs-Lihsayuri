@@ -9,9 +9,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   2 .relocate     000009d0  20400000  00406f6c  00020000  2**3
                   CONTENTS, ALLOC, LOAD, CODE
-  3 .bss          00000308  204009d0  0040793c  000209d0  2**2
+  3 .bss          00000304  204009d0  0040793c  000209d0  2**2
                   ALLOC
-  4 .stack        00002000  20400cd8  00407c44  000209d0  2**0
+  4 .stack        00002004  20400cd4  00407c40  000209d0  2**0
                   ALLOC
   5 .heap         00000200  20402cd8  00409c44  000209d0  2**0
                   ALLOC
@@ -19,23 +19,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
   7 .comment      00000059  00000000  00000000  000209fe  2**0
                   CONTENTS, READONLY
-  8 .debug_info   00017d1c  00000000  00000000  00020a57  2**0
+  8 .debug_info   00017d1d  00000000  00000000  00020a57  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_abbrev 0000361c  00000000  00000000  00038773  2**0
+  9 .debug_abbrev 00003604  00000000  00000000  00038774  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_loc    0000553a  00000000  00000000  0003bd8f  2**0
+ 10 .debug_loc    0000553a  00000000  00000000  0003bd78  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_aranges 00000860  00000000  00000000  000412c9  2**0
+ 11 .debug_aranges 00000860  00000000  00000000  000412b2  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 000008e0  00000000  00000000  00041b29  2**0
+ 12 .debug_ranges 000008e0  00000000  00000000  00041b12  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_macro  00020ff5  00000000  00000000  00042409  2**0
+ 13 .debug_macro  00020ff5  00000000  00000000  000423f2  2**0
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_line   0000e484  00000000  00000000  000633fe  2**0
+ 14 .debug_line   0000e484  00000000  00000000  000633e7  2**0
                   CONTENTS, READONLY, DEBUGGING
- 15 .debug_str    0009013b  00000000  00000000  00071882  2**0
+ 15 .debug_str    00090130  00000000  00000000  0007186b  2**0
                   CONTENTS, READONLY, DEBUGGING
- 16 .debug_frame  00001e50  00000000  00000000  001019c0  2**2
+ 16 .debug_frame  00001e50  00000000  00000000  0010199c  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -3316,7 +3316,7 @@ static inline void cpu_irq_restore(irqflags_t flags)
   40136c:	20400000 	.word	0x20400000
   401370:	00406f6c 	.word	0x00406f6c
   401374:	204009d0 	.word	0x204009d0
-  401378:	20400cd8 	.word	0x20400cd8
+  401378:	20400cd4 	.word	0x20400cd4
   40137c:	204009d0 	.word	0x204009d0
   401380:	e000ed00 	.word	0xe000ed00
   401384:	00400000 	.word	0x00400000
@@ -3656,7 +3656,7 @@ void but2_callback(void)
   401576:	4b01      	ldr	r3, [pc, #4]	; (40157c <but2_callback+0x8>)
   401578:	701a      	strb	r2, [r3, #0]
   40157a:	4770      	bx	lr
-  40157c:	20400cad 	.word	0x20400cad
+  40157c:	20400ca6 	.word	0x20400ca6
 
 00401580 <but3_callback>:
 }
@@ -3668,7 +3668,7 @@ void but3_callback(void)
   401582:	4b01      	ldr	r3, [pc, #4]	; (401588 <but3_callback+0x8>)
   401584:	701a      	strb	r2, [r3, #0]
   401586:	4770      	bx	lr
-  401588:	20400cac 	.word	0x20400cac
+  401588:	20400ca5 	.word	0x20400ca5
 
 0040158c <pisca_led>:
 /************************************************************************/
@@ -3701,12 +3701,12 @@ void pisca_led(int n, int t){
   4015b0:	2050      	movs	r0, #80	; 0x50
   4015b2:	4c28      	ldr	r4, [pc, #160]	; (401654 <pisca_led+0xc8>)
   4015b4:	47a0      	blx	r4
-	for (int i=1;i<=n;){   
+	for (int i=1;i<=n;){
   4015b6:	2f00      	cmp	r7, #0
   4015b8:	dd47      	ble.n	40164a <pisca_led+0xbe>
-			pio_clear(LED2_PIO, LED2_PIO_IDX_MASK);
-			gfx_mono_generic_draw_vertical_line(x+i, 16, 10, GFX_PIXEL_SET);
-			delay_ms(t);
+		pio_clear(LED2_PIO, LED2_PIO_IDX_MASK);
+		gfx_mono_generic_draw_vertical_line(x+i, 16, 10, GFX_PIXEL_SET);
+		delay_ms(t);
   4015ba:	4c27      	ldr	r4, [pc, #156]	; (401658 <pisca_led+0xcc>)
   4015bc:	fba6 0104 	umull	r0, r1, r6, r4
   4015c0:	17f3      	asrs	r3, r6, #31
@@ -3721,70 +3721,70 @@ void pisca_led(int n, int t){
   4015d8:	47a0      	blx	r4
   4015da:	4682      	mov	sl, r0
   4015dc:	2401      	movs	r4, #1
-			pio_clear(LED2_PIO, LED2_PIO_IDX_MASK);
+		pio_clear(LED2_PIO, LED2_PIO_IDX_MASK);
   4015de:	4d20      	ldr	r5, [pc, #128]	; (401660 <pisca_led+0xd4>)
   4015e0:	f8df 9094 	ldr.w	r9, [pc, #148]	; 401678 <pisca_led+0xec>
-			gfx_mono_generic_draw_vertical_line(x+i, 16, 10, GFX_PIXEL_SET);
+		gfx_mono_generic_draw_vertical_line(x+i, 16, 10, GFX_PIXEL_SET);
   4015e4:	f8df 8094 	ldr.w	r8, [pc, #148]	; 40167c <pisca_led+0xf0>
   4015e8:	e010      	b.n	40160c <pisca_led+0x80>
-			delay_ms(t);
+		delay_ms(t);
   4015ea:	2033      	movs	r0, #51	; 0x33
   4015ec:	f8df b084 	ldr.w	fp, [pc, #132]	; 401674 <pisca_led+0xe8>
   4015f0:	47d8      	blx	fp
-			pio_set(LED2_PIO, LED2_PIO_IDX_MASK);
+		pio_set(LED2_PIO, LED2_PIO_IDX_MASK);
   4015f2:	f04f 4180 	mov.w	r1, #1073741824	; 0x40000000
   4015f6:	4628      	mov	r0, r5
   4015f8:	4b1a      	ldr	r3, [pc, #104]	; (401664 <pisca_led+0xd8>)
   4015fa:	4798      	blx	r3
-			delay_ms(t);
+		delay_ms(t);
   4015fc:	2033      	movs	r0, #51	; 0x33
   4015fe:	47d8      	blx	fp
-			i++;
+		i++;
   401600:	3401      	adds	r4, #1
-			if (but2_flag){
+		if (but2_flag){
   401602:	4b19      	ldr	r3, [pc, #100]	; (401668 <pisca_led+0xdc>)
   401604:	781b      	ldrb	r3, [r3, #0]
   401606:	b9d3      	cbnz	r3, 40163e <pisca_led+0xb2>
-	for (int i=1;i<=n;){   
+	for (int i=1;i<=n;){
   401608:	42a7      	cmp	r7, r4
   40160a:	db1e      	blt.n	40164a <pisca_led+0xbe>
-			pio_clear(LED2_PIO, LED2_PIO_IDX_MASK);
+		pio_clear(LED2_PIO, LED2_PIO_IDX_MASK);
   40160c:	f04f 4180 	mov.w	r1, #1073741824	; 0x40000000
   401610:	4628      	mov	r0, r5
   401612:	47c8      	blx	r9
-			gfx_mono_generic_draw_vertical_line(x+i, 16, 10, GFX_PIXEL_SET);
+		gfx_mono_generic_draw_vertical_line(x+i, 16, 10, GFX_PIXEL_SET);
   401614:	f104 0050 	add.w	r0, r4, #80	; 0x50
   401618:	2301      	movs	r3, #1
   40161a:	220a      	movs	r2, #10
   40161c:	2110      	movs	r1, #16
   40161e:	b2c0      	uxtb	r0, r0
   401620:	47c0      	blx	r8
-			delay_ms(t);
+		delay_ms(t);
   401622:	2e00      	cmp	r6, #0
   401624:	d0e1      	beq.n	4015ea <pisca_led+0x5e>
   401626:	4650      	mov	r0, sl
   401628:	f8df b048 	ldr.w	fp, [pc, #72]	; 401674 <pisca_led+0xe8>
   40162c:	47d8      	blx	fp
-			pio_set(LED2_PIO, LED2_PIO_IDX_MASK);
+		pio_set(LED2_PIO, LED2_PIO_IDX_MASK);
   40162e:	f04f 4180 	mov.w	r1, #1073741824	; 0x40000000
   401632:	4628      	mov	r0, r5
   401634:	4b0b      	ldr	r3, [pc, #44]	; (401664 <pisca_led+0xd8>)
   401636:	4798      	blx	r3
-			delay_ms(t);
+		delay_ms(t);
   401638:	4650      	mov	r0, sl
   40163a:	47d8      	blx	fp
   40163c:	e7e0      	b.n	401600 <pisca_led+0x74>
-				frequencia = frequencia;
+			delay = delay;
   40163e:	4b0b      	ldr	r3, [pc, #44]	; (40166c <pisca_led+0xe0>)
   401640:	681a      	ldr	r2, [r3, #0]
   401642:	601a      	str	r2, [r3, #0]
-				delay_ms(200);
+			delay_ms(200);
   401644:	480a      	ldr	r0, [pc, #40]	; (401670 <pisca_led+0xe4>)
   401646:	4b0b      	ldr	r3, [pc, #44]	; (401674 <pisca_led+0xe8>)
   401648:	4798      	blx	r3
-				return;
-			}
-		} 
+			return;
+		}
+	}
 }
   40164a:	b003      	add	sp, #12
   40164c:	e8bd 8ff0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}
@@ -3794,7 +3794,7 @@ void pisca_led(int n, int t){
   40165c:	00401951 	.word	0x00401951
   401660:	400e1200 	.word	0x400e1200
   401664:	00400b8f 	.word	0x00400b8f
-  401668:	20400cad 	.word	0x20400cad
+  401668:	20400ca6 	.word	0x20400ca6
   40166c:	20400ca8 	.word	0x20400ca8
   401670:	009a5649 	.word	0x009a5649
   401674:	20400001 	.word	0x20400001
@@ -3802,7 +3802,7 @@ void pisca_led(int n, int t){
   40167c:	004003f5 	.word	0x004003f5
 
 00401680 <io_init>:
-	
+
 
 
 // Inicializa botao SW0 do kit com interrupcao
@@ -3987,11 +3987,11 @@ void io_init(void)
 
 004017b0 <draw_frequency>:
 
-void draw_frequency(frequencia){
+void draw_frequency(int delay){
   4017b0:	b510      	push	{r4, lr}
   4017b2:	b086      	sub	sp, #24
 	char freq_str[20];
-	sprintf(freq_str, "%d ms", frequencia);
+	sprintf(freq_str, "%d ms", delay);
   4017b4:	4602      	mov	r2, r0
   4017b6:	4906      	ldr	r1, [pc, #24]	; (4017d0 <draw_frequency+0x20>)
   4017b8:	a801      	add	r0, sp, #4
@@ -4046,11 +4046,11 @@ void main(void)
   4017f8:	4b45      	ldr	r3, [pc, #276]	; (401910 <main+0x130>)
   4017fa:	4798      	blx	r3
 	
-	frequencia = 500;
+	delay = 500;
   4017fc:	4b45      	ldr	r3, [pc, #276]	; (401914 <main+0x134>)
   4017fe:	f44f 72fa 	mov.w	r2, #500	; 0x1f4
   401802:	601a      	str	r2, [r3, #0]
-	draw_frequency(frequencia);
+	draw_frequency(delay);
   401804:	6818      	ldr	r0, [r3, #0]
   401806:	4b44      	ldr	r3, [pc, #272]	; (401918 <main+0x138>)
   401808:	4798      	blx	r3
@@ -4062,19 +4062,19 @@ void main(void)
   40180a:	f8df 8138 	ldr.w	r8, [pc, #312]	; 401944 <main+0x164>
 			for (int i = 0; i < 10000000; i++){
 				if (but3_flag){
-					frequencia -= 100;
+					delay += 100; 
 					delay_ms(300);
   40180e:	f8df 9138 	ldr.w	r9, [pc, #312]	; 401948 <main+0x168>
-					draw_frequency(frequencia);
+					draw_frequency(delay);
 					break;
 				}
 				if (pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
   401812:	4f42      	ldr	r7, [pc, #264]	; (40191c <main+0x13c>)
 						break;
-					} 
-				
+					}
+					
 				}
-				 else{
+				else{
 					delay_ms(200);
   401814:	f8df a134 	ldr.w	sl, [pc, #308]	; 40194c <main+0x16c>
 					if((!pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK)) && i >= 1000000){
@@ -4088,25 +4088,25 @@ void main(void)
   401824:	781b      	ldrb	r3, [r3, #0]
   401826:	b9e3      	cbnz	r3, 401862 <main+0x82>
   401828:	e014      	b.n	401854 <main+0x74>
-					frequencia -= 100;
+					delay += 100; 
   40182a:	4c3a      	ldr	r4, [pc, #232]	; (401914 <main+0x134>)
   40182c:	6823      	ldr	r3, [r4, #0]
-  40182e:	3b64      	subs	r3, #100	; 0x64
+  40182e:	3364      	adds	r3, #100	; 0x64
   401830:	6023      	str	r3, [r4, #0]
 					delay_ms(300);
   401832:	4648      	mov	r0, r9
   401834:	4b3d      	ldr	r3, [pc, #244]	; (40192c <main+0x14c>)
   401836:	4798      	blx	r3
-					draw_frequency(frequencia);
+					draw_frequency(delay);
   401838:	6820      	ldr	r0, [r4, #0]
   40183a:	4b37      	ldr	r3, [pc, #220]	; (401918 <main+0x138>)
   40183c:	4798      	blx	r3
 					break;
 				}
 				
-			} 
+			}
 			
-			draw_frequency(frequencia);
+			draw_frequency(delay);
   40183e:	4b35      	ldr	r3, [pc, #212]	; (401914 <main+0x134>)
   401840:	6818      	ldr	r0, [r3, #0]
   401842:	4b35      	ldr	r3, [pc, #212]	; (401918 <main+0x138>)
@@ -4120,7 +4120,7 @@ void main(void)
 			but3_flag = 0;
   401850:	4a34      	ldr	r2, [pc, #208]	; (401924 <main+0x144>)
   401852:	7013      	strb	r3, [r2, #0]
-		
+			
 		}
 		pmc_sleep(SAM_PM_SMODE_SLEEP_WFI); //utilizar somente o modo sleep mode
   401854:	2002      	movs	r0, #2
@@ -4139,16 +4139,16 @@ void main(void)
 				if (pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
   40186c:	4d31      	ldr	r5, [pc, #196]	; (401934 <main+0x154>)
   40186e:	e01e      	b.n	4018ae <main+0xce>
-						frequencia-=100;
+						delay+= 100;
   401870:	4c28      	ldr	r4, [pc, #160]	; (401914 <main+0x134>)
   401872:	6823      	ldr	r3, [r4, #0]
-  401874:	3b64      	subs	r3, #100	; 0x64
+  401874:	3364      	adds	r3, #100	; 0x64
   401876:	6023      	str	r3, [r4, #0]
 						delay_ms(300);
   401878:	4648      	mov	r0, r9
   40187a:	4b2c      	ldr	r3, [pc, #176]	; (40192c <main+0x14c>)
   40187c:	4798      	blx	r3
-						draw_frequency(frequencia);
+						draw_frequency(delay);
   40187e:	6820      	ldr	r0, [r4, #0]
   401880:	4b25      	ldr	r3, [pc, #148]	; (401918 <main+0x138>)
   401882:	4798      	blx	r3
@@ -4162,7 +4162,7 @@ void main(void)
   40188c:	2200      	movs	r2, #0
   40188e:	4b26      	ldr	r3, [pc, #152]	; (401928 <main+0x148>)
   401890:	701a      	strb	r2, [r3, #0]
-					pisca_led(30, frequencia);
+					pisca_led(30, delay);
   401892:	4b20      	ldr	r3, [pc, #128]	; (401914 <main+0x134>)
   401894:	6819      	ldr	r1, [r3, #0]
   401896:	201e      	movs	r0, #30
@@ -4207,16 +4207,16 @@ void main(void)
   4018e4:	dcdb      	bgt.n	40189e <main+0xbe>
   4018e6:	2800      	cmp	r0, #0
   4018e8:	d0d9      	beq.n	40189e <main+0xbe>
-						frequencia+=100;
+						delay -= 100;
   4018ea:	4c0a      	ldr	r4, [pc, #40]	; (401914 <main+0x134>)
   4018ec:	6823      	ldr	r3, [r4, #0]
-  4018ee:	3364      	adds	r3, #100	; 0x64
+  4018ee:	3b64      	subs	r3, #100	; 0x64
   4018f0:	6023      	str	r3, [r4, #0]
 						delay_ms(200);
   4018f2:	4650      	mov	r0, sl
   4018f4:	4b0d      	ldr	r3, [pc, #52]	; (40192c <main+0x14c>)
   4018f6:	4798      	blx	r3
-						draw_frequency(frequencia);
+						draw_frequency(delay);
   4018f8:	6820      	ldr	r0, [r4, #0]
   4018fa:	4b07      	ldr	r3, [pc, #28]	; (401918 <main+0x138>)
   4018fc:	4798      	blx	r3
@@ -4231,8 +4231,8 @@ void main(void)
   401918:	004017b1 	.word	0x004017b1
   40191c:	400e1200 	.word	0x400e1200
   401920:	400e1400 	.word	0x400e1400
-  401924:	20400cac 	.word	0x20400cac
-  401928:	20400cad 	.word	0x20400cad
+  401924:	20400ca5 	.word	0x20400ca5
+  401928:	20400ca6 	.word	0x20400ca6
   40192c:	20400001 	.word	0x20400001
   401930:	00401059 	.word	0x00401059
   401934:	00400b97 	.word	0x00400b97
@@ -8925,13 +8925,13 @@ void main(void)
   404924:	4801      	ldr	r0, [pc, #4]	; (40492c <__malloc_lock+0x8>)
   404926:	f7ff bc5d 	b.w	4041e4 <__retarget_lock_acquire_recursive>
   40492a:	bf00      	nop
-  40492c:	20400cc0 	.word	0x20400cc0
+  40492c:	20400cbc 	.word	0x20400cbc
 
 00404930 <__malloc_unlock>:
   404930:	4801      	ldr	r0, [pc, #4]	; (404938 <__malloc_unlock+0x8>)
   404932:	f7ff bc59 	b.w	4041e8 <__retarget_lock_release_recursive>
   404936:	bf00      	nop
-  404938:	20400cc0 	.word	0x20400cc0
+  404938:	20400cbc 	.word	0x20400cbc
 
 0040493c <_Balloc>:
   40493c:	6cc3      	ldr	r3, [r0, #76]	; 0x4c
@@ -9570,7 +9570,7 @@ void main(void)
   404f4a:	d0fb      	beq.n	404f44 <_sbrk_r+0x14>
   404f4c:	602b      	str	r3, [r5, #0]
   404f4e:	bd38      	pop	{r3, r4, r5, pc}
-  404f50:	20400cd4 	.word	0x20400cd4
+  404f50:	20400cd0 	.word	0x20400cd0
 	...
 
 00404f80 <strlen>:
@@ -11612,7 +11612,7 @@ void portable_delay_cycles(unsigned long n)
 	...
 
 20400450 <__atexit_recursive_mutex>:
-20400450:	0cb0 2040                                   ..@ 
+20400450:	0cac 2040                                   ..@ 
 
 20400454 <__malloc_av_>:
 	...

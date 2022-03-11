@@ -49,7 +49,7 @@ volatile char but1_flag; // variável global
 volatile char but2_flag; // variável global
 volatile char but3_flag; // variável global
 
-volatile int frequencia;
+volatile int delay;
 
 void io_init(void);
 void pisca_led(int n, int t);
@@ -83,21 +83,21 @@ void pisca_led(int n, int t){
 	int y = 16;
 	gfx_mono_generic_draw_filled_rect(x+1, y+1, 31, 9, GFX_PIXEL_CLR);
 	gfx_mono_generic_draw_rect(x, y, 32, 10, GFX_PIXEL_SET);
-	for (int i=1;i<=n;){   
-			pio_clear(LED2_PIO, LED2_PIO_IDX_MASK);
-			gfx_mono_generic_draw_vertical_line(x+i, 16, 10, GFX_PIXEL_SET);
-			delay_ms(t);
-			pio_set(LED2_PIO, LED2_PIO_IDX_MASK);
-			delay_ms(t);
-			i++;
-			if (but2_flag){
-				frequencia = frequencia;
-				delay_ms(200);
-				return;
-			}
-		} 
+	for (int i=1;i<=n;){
+		pio_clear(LED2_PIO, LED2_PIO_IDX_MASK);
+		gfx_mono_generic_draw_vertical_line(x+i, 16, 10, GFX_PIXEL_SET);
+		delay_ms(t);
+		pio_set(LED2_PIO, LED2_PIO_IDX_MASK);
+		delay_ms(t);
+		i++;
+		if (but2_flag){
+			delay = delay;
+			delay_ms(200);
+			return;
+		}
+	}
 }
-	
+
 
 
 // Inicializa botao SW0 do kit com interrupcao
@@ -169,9 +169,9 @@ void io_init(void)
 	NVIC_SetPriority(BUT3_PIO_ID, 4); // Prioridade 4
 }
 
-void draw_frequency(frequencia){
+void draw_frequency(int delay){
 	char freq_str[20];
-	sprintf(freq_str, "%d ms", frequencia);
+	sprintf(freq_str, "%d ms", delay);
 	gfx_mono_draw_string(freq_str, 5,16, &sysfont);
 }
 
@@ -196,8 +196,8 @@ void main(void)
 	// configura botao com interrupcao
 	io_init();
 	
-	frequencia = 500;
-	draw_frequency(frequencia);
+	delay = 500;
+	draw_frequency(delay);
 	// aplicacoes embarcadas no devem sair do while(1).
 	
 	while(1)
@@ -205,44 +205,42 @@ void main(void)
 		if (but1_flag || but3_flag || but2_flag){  // se qualquer botão for apertado, ele começa a fazer as conferências.
 			for (int i = 0; i < 10000000; i++){
 				if (but3_flag){
-					frequencia -= 100;
+					delay += 100; 
 					delay_ms(300);
-					draw_frequency(frequencia);
+					draw_frequency(delay);
 					break;
 				}
 				if (pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK)){
 					if((!pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK)) && i >= 1000000){
-						frequencia-=100;
+						delay+= 100;
 						delay_ms(300);
-						draw_frequency(frequencia);
+						draw_frequency(delay);
 						break;
 					} else if (pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK) && i < 1000000 ){
-						frequencia+=100;
+						delay -= 100;
 						delay_ms(200);
-						draw_frequency(frequencia);
+						draw_frequency(delay);
 						break;
-					} 
-				
+					}
+					
 				}
-				 else{
+				else{
 					delay_ms(200);
 					but2_flag = 0;
-					pisca_led(30, frequencia);
+					pisca_led(30, delay);
 					break;
 				}
 				
-			} 
+			}
 			
-			draw_frequency(frequencia);
+			draw_frequency(delay);
 			but1_flag = 0;
 			but2_flag = 0;
 			but3_flag = 0;
-		
+			
 		}
 		pmc_sleep(SAM_PM_SMODE_SLEEP_WFI); //utilizar somente o modo sleep mode
-	
+		
 	}
 
 }
-
-
