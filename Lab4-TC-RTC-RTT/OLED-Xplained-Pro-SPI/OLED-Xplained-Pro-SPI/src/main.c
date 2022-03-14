@@ -1,8 +1,17 @@
 #include <asf.h>
+#include <time.h>
+#include <string.h>
 
 #include "gfx_mono_ug_2832hsweg04.h"
 #include "gfx_mono_text.h"
 #include "sysfont.h"
+
+//Definindo tudo do LED da placa:
+#define LED_PIO           PIOC                 // periferico que controla o LED
+// #
+#define LED_PIO_ID        ID_PIOC                 // ID do periférico PIOC (controla LED)
+#define LED_PIO_IDX       8                    // ID do LED no PIO
+#define LED_PIO_IDX_MASK  (1 << LED_PIO_IDX)   // Mascara para CONTROLARMOS o LED
 
 // Definindo tudo do botão 1:
 #define BUT1_PIO PIOD
@@ -56,7 +65,9 @@ typedef struct  {
 
 volatile char but1_flag; // variável global
 volatile char flag_rtc_alarm = 0;
-
+volatile char flag_rtc_second = 0;
+volatile int i = 1;
+volatile int vinteSegundos = 0;
 
 void TC_init(Tc * TC, int ID_TC, int TC_CHANNEL, int freq);
 void RTC_init(Rtc *rtc, uint32_t id_rtc, calendar t, uint32_t irq_type);
@@ -78,6 +89,29 @@ void TC1_Handler(void) {
 
 	/** Muda o estado do LED (pisca) **/
 	pin_toggle(LED1_PIO, LED1_PIO_IDX_MASK);  
+}
+
+void TC2_Handler(void) {
+
+	volatile uint32_t status = tc_get_status(TC0, 2);
+
+	/** Muda o estado do LED (pisca) **/
+	pin_toggle(LED_PIO, LED_PIO_IDX_MASK);  
+}
+
+
+void TC0_Handler(void) {
+
+	volatile uint32_t status = tc_get_status(TC0, 0);
+	pin_toggle(LED3_PIO, LED3_PIO_IDX_MASK);
+}
+
+
+void TC4_Handler(void) {
+
+	volatile uint32_t status = tc_get_status(TC1, 1);
+	i++;
+	
 }
 
 void RTT_Handler(void) {
@@ -103,7 +137,7 @@ void RTC_Handler(void) {
 	
 	/* seccond tick */
 	if ((ul_status & RTC_SR_SEC) == RTC_SR_SEC) {
-		// o código para irq de segundo vem aqui
+		flag_rtc_second = 1;
 	}
 	
 	/* Time or date alarm */
@@ -140,17 +174,27 @@ void pisca_led (int n, int t) {
 void io_init(void)
 {
 	// Configura led1
+	pmc_enable_periph_clk(LED_PIO_ID);
+	pio_set_output(LED_PIO, LED_PIO_IDX_MASK, 0, 0, 0 );
+
+	// Configura led1
 	pmc_enable_periph_clk(LED1_PIO_ID);
-	pio_configure(LED1_PIO, PIO_OUTPUT_0, LED1_PIO_IDX_MASK, PIO_DEFAULT);
+	pio_set_output(LED1_PIO, LED1_PIO_IDX_MASK, 0, 0, 0 );
+
+	//pio_configure(LED1_PIO, PIO_OUTPUT_0, LED1_PIO_IDX_MASK, PIO_DEFAULT);
 	
 	
 	// Configura led2
 	pmc_enable_periph_clk(LED2_PIO_ID);
-	pio_configure(LED2_PIO, PIO_OUTPUT_0, LED2_PIO_IDX_MASK, PIO_DEFAULT);
+	//pio_configure(LED2_PIO, PIO_OUTPUT_0, LED2_PIO_IDX_MASK, PIO_DEFAULT);
+	pio_set_output(LED2_PIO, LED2_PIO_IDX_MASK, 0, 0, 0 );
+
 
 	// Configura led3
 	pmc_enable_periph_clk(LED3_PIO_ID);
-	pio_configure(LED3_PIO, PIO_OUTPUT_0, LED3_PIO_IDX_MASK, PIO_DEFAULT);
+	//pio_configure(LED3_PIO, PIO_OUTPUT_0, LED3_PIO_IDX_MASK, PIO_DEFAULT);
+	pio_set_output(LED3_PIO, LED3_PIO_IDX_MASK, 1, 0, 0 );
+
 
 	// Inicializa clock do periférico PIO responsavel pelo botao
 	pmc_enable_periph_clk(BUT1_PIO_ID);
@@ -251,6 +295,11 @@ void RTC_init(Rtc *rtc, uint32_t id_rtc, calendar t, uint32_t irq_type) {
 	rtc_enable_interrupt(rtc,  irq_type);
 }
 
+void draw (uint32_t current_hour, uint32_t current_min, uint32_t current_sec){
+	char tempo[20];
+	sprintf(tempo, "%02d:%02d:%02d", current_hour, current_min, current_sec);
+	gfx_mono_draw_string(tempo, 5,16, &sysfont);
+}
 
 
 int main (void)
@@ -265,40 +314,61 @@ int main (void)
 
 
   // Init OLED
-	//gfx_mono_ssd1306_init();
-  //
-  //
-	//gfx_mono_draw_filled_circle(20, 16, 16, GFX_PIXEL_SET, GFX_WHOLE);
-  //gfx_mono_draw_string("mundo", 50,16, &sysfont);
-  
+	gfx_mono_ssd1306_init();
+
 	TC_init(TC0, ID_TC1, 1, 4);
 	tc_start(TC0, 1);
+	
+	TC_init(TC0, ID_TC2, 2, 5);
+	tc_start(TC0, 2);
+	
   
 	RTT_init(4, 16, RTT_MR_ALMIEN);
   
                                                                                                     
-	/** Configura RTC */
-    calendar rtc_initial = {2018, 3, 19, 12, 15, 45 ,1};
-	RTC_init(RTC, ID_RTC, rtc_initial, RTC_IER_ALREN);
-                                                                                                    
+	calendar rtc_initial = {2018, 3, 19, 12, 15, 45 ,1};
+	RTC_init(RTC, ID_RTC, rtc_initial, RTC_SR_SEC);
+
 	/* Leitura do valor atual do RTC */
 	uint32_t current_hour, current_min, current_sec;
 	uint32_t current_year, current_month, current_day, current_week;
-	
-                                                                                                    
-	/* configura alarme do RTC para daqui 20 segundos */
-	if (but1_flag){
-		rtc_get_time(RTC, &current_hour, &current_min, &current_sec);
-		rtc_get_date(RTC, &current_year, &current_month, &current_day, &current_week);
-		rtc_set_date_alarm(RTC, 1, current_month, 1, current_day);
-		rtc_set_time_alarm(RTC, 1, current_hour, 1, current_min, 1, current_sec + 2);
-	}
 
-
-  /* Insert application code here, after the board has been initialized. */
+	uint32_t next_sec;
 	while(1) {
-		 pmc_sleep(SAM_PM_SMODE_SLEEP_WFI);
-				
-	}
+
+		if (flag_rtc_second){
+			rtc_get_date(RTC, &current_year, &current_month, &current_day, &current_week);
+			rtc_get_time(RTC, &current_hour, &current_min, &current_sec);
+			draw(current_hour, current_min, current_sec);
+		}
+		
+		// faz com o TC de 1Hz
+		/* configura alarme do RTC para daqui 20 segundos */
+		if (but1_flag){
+			TC_init(TC1, ID_TC4, 1, 1);
+			tc_start(TC1, 1);
 			
+			 while (i <= 20){
+				 rtc_get_date(RTC, &current_year, &current_month, &current_day, &current_week);
+				 rtc_get_time(RTC, &current_hour, &current_min, &current_sec);
+				 draw(current_hour, current_min, current_sec);
+				 
+			 }
+				tc_stop(TC1, 1);
+				TC_init(TC0, ID_TC0, 0, 8);
+				tc_start(TC0, 0);
+				but1_flag = 0;
+					
+		
+		}
+				
+		
+		
+	}  
+		
+		pmc_sleep(SAM_PM_SMODE_SLEEP_WFI);
+		
 }
+	
+
+			
