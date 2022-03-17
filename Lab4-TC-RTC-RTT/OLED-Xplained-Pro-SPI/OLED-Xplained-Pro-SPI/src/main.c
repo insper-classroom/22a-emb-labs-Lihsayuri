@@ -101,18 +101,10 @@ void TC2_Handler(void) {
 
 
 void TC0_Handler(void) {
-
 	volatile uint32_t status = tc_get_status(TC0, 0);
 	pin_toggle(LED3_PIO, LED3_PIO_IDX_MASK);
 }
 
-
-void TC4_Handler(void) {
-
-	volatile uint32_t status = tc_get_status(TC1, 1);
-	i++;
-	
-}
 
 void RTT_Handler(void) {
 	uint32_t ul_status;
@@ -327,7 +319,7 @@ int main (void)
   
                                                                                                     
 	calendar rtc_initial = {2018, 3, 19, 12, 15, 45 ,1};
-	RTC_init(RTC, ID_RTC, rtc_initial, RTC_SR_SEC);
+	RTC_init(RTC, ID_RTC, rtc_initial, RTC_SR_SEC|RTC_SR_ALARM);
 
 	/* Leitura do valor atual do RTC */
 	uint32_t current_hour, current_min, current_sec;
@@ -345,29 +337,32 @@ int main (void)
 		// faz com o TC de 1Hz
 		/* configura alarme do RTC para daqui 20 segundos */
 		if (but1_flag){
-			TC_init(TC1, ID_TC4, 1, 1);
-			tc_start(TC1, 1);
-			
-			 while (i <= 20){
-				 rtc_get_date(RTC, &current_year, &current_month, &current_day, &current_week);
-				 rtc_get_time(RTC, &current_hour, &current_min, &current_sec);
-				 draw(current_hour, current_min, current_sec);
-				 
-			 }
-				tc_stop(TC1, 1);
-				TC_init(TC0, ID_TC0, 0, 8);
-				tc_start(TC0, 0);
-				but1_flag = 0;
-					
-		
+			uint32_t next_min, next_sec;
+			if (current_sec >= 40){
+				next_min = (current_sec+20)/60;
+				next_sec = (current_sec+20) % 60;
+				rtc_set_time_alarm(RTC, 1, current_hour, 1,  current_min + next_min, 1, next_sec);
+
+			} else {
+				next_min = current_min;
+				next_sec = current_sec + 20;
+				rtc_set_time_alarm(RTC, 1, current_hour, 1,  next_min, 1, next_sec);
+			}
+			 but1_flag = 0;
 		}
+		
+		 if (flag_rtc_alarm){
+			 TC_init(TC0, ID_TC0, 0, 8);
+			 tc_start(TC0, 0);
+			 flag_rtc_alarm = 0;
+		 }
 				
 		
+		pmc_sleep(SAM_PM_SMODE_SLEEP_WFI);
+
 		
 	}  
-		
-		pmc_sleep(SAM_PM_SMODE_SLEEP_WFI);
-		
+				
 }
 	
 
