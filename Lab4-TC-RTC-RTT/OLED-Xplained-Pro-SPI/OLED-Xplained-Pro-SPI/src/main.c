@@ -123,11 +123,11 @@ void RTT_Handler(void) {
 	/* IRQ due to Alarm */
 	if ((ul_status & RTT_SR_ALMS) == RTT_SR_ALMS) {
 		RTT_init(4, 16, RTT_MR_RTTINCIEN);
+		pin_toggle(LED2_PIO, LED2_PIO_IDX_MASK);    // BLINK Led
 	}
 	
 	/* IRQ due to Time has changed */
 	if ((ul_status & RTT_SR_RTTINC) == RTT_SR_RTTINC) {
-		pin_toggle(LED2_PIO, LED2_PIO_IDX_MASK);    // BLINK Led
 	}
 
 }
