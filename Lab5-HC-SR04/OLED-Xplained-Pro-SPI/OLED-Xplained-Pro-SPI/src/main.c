@@ -21,11 +21,14 @@
 #define ECHO_PIO_IDX			6
 #define ECHO_PIO_IDX_MASK	(1 << ECHO_PIO_IDX)
 
-
 volatile char echo_flag = 0; // variável global
+volatile char rtt_alarm = 0;
 volatile float freq = (float) 1/(0.000058*2);
 volatile int tempo = 0;
 volatile char but1_flag = 0;
+volatile int i = 0;
+volatile j = 26;
+volatile int medicoes = 0;
 
 
 static void RTT_init(float freqPrescale, uint32_t IrqNPulses, uint32_t rttIRQSource);
@@ -39,13 +42,46 @@ void but1_callback(void){
 
 void echo_callback(void)
 {	
+	float t_alarme = 4/340;
 	if (echo_flag == 0){
 		echo_flag = 1;
-		RTT_init(freq, 0, 0);
+		RTT_init(8620, 11*8620, RTT_MR_ALMIEN);
 	} else{
 		echo_flag = 0;
 		tempo = rtt_read_timer_value(RTT);
 	}
+}
+
+
+void TC1_Handler(void) {
+	/**
+	* Devemos indicar ao TC que a interrupção foi satisfeita.
+	* Isso é realizado pela leitura do status do periférico
+	**/
+	volatile uint32_t status = tc_get_status(TC0, 1);
+
+	/** Muda o estado do LED (pisca) **/
+	i++;
+}
+
+
+void TC_init(Tc * TC, int ID_TC, int TC_CHANNEL, int freq){
+	uint32_t ul_div;
+	uint32_t ul_tcclks;
+	uint32_t ul_sysclk = sysclk_get_cpu_hz();
+
+	/* Configura o PMC */
+	pmc_enable_periph_clk(ID_TC);
+
+	/** Configura o TC para operar em  freq hz e interrupçcão no RC compare */
+	tc_find_mck_divisor(freq, ul_sysclk, &ul_div, &ul_tcclks, ul_sysclk);
+	tc_init(TC, TC_CHANNEL, ul_tcclks | TC_CMR_CPCTRG);
+	tc_write_rc(TC, TC_CHANNEL, (ul_sysclk / ul_div) / freq);
+
+	/* Configura NVIC*/
+	NVIC_SetPriority(ID_TC, 4);
+	NVIC_EnableIRQ((IRQn_Type) ID_TC);
+	tc_enable_interrupt(TC, TC_CHANNEL, TC_IER_CPCS);
 }
 
 
@@ -87,7 +123,8 @@ void RTT_Handler(void) {
 
 	/* IRQ due to Alarm */
 	if ((ul_status & RTT_SR_ALMS) == RTT_SR_ALMS) {
-		RTT_init(4, 0, RTT_MR_RTTINCIEN);
+		//RTT_init(4, 0, RTT_MR_RTTINCIEN);
+		rtt_alarm = 1;
 	}
 	
 	/* IRQ due to Time has changed */
@@ -126,7 +163,7 @@ void configure_interruption(Pio *pio, uint32_t ul_id, const uint32_t ul_mask,  u
 void io_init(void)
 {
 	configure_pio_input(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT1_PIO_ID);
-	configure_interruption(BUT1_PIO, BUT1_PIO_ID, BUT1_PIO_IDX_MASK, PIO_IT_EDGE, but1_callback, 2);
+	configure_interruption(BUT1_PIO, BUT1_PIO_ID, BUT1_PIO_IDX_MASK, PIO_IT_FALL_EDGE, but1_callback, 2);
 	
 	// Configura trig como se fosse LED
 	configure_pio_output(TRIG_PIO, TRIG_PIO_IDX_MASK, TRIG_PIO_ID);
@@ -147,9 +184,67 @@ void draw (int ms){
 	char string[20];
 	float t = (float) ms/freq;
 	float distancia = (340*t*100.0)/2.0;
-	sprintf(string, "%2.2f cm", distancia);
-	gfx_mono_draw_string(string, 0,0, &sysfont);
-}
+	float distancia_maior = distancia + 0.3;
+	float distancia_menor = distancia - 0.3;
+	
+
+	//(distancia >= 400)
+	if (rtt_alarm || (distancia >= 400)){
+		i = 0;
+		gfx_mono_generic_draw_filled_rect(0, 0, 127, 31, GFX_PIXEL_CLR);
+		sprintf(string, "Erro!");
+		gfx_mono_draw_string(string, 0,0, &sysfont);
+		rtt_alarm = 0;
+		delay_ms(200);
+		gfx_mono_generic_draw_filled_rect(0, 0, 127, 31, GFX_PIXEL_CLR);
+	} else{
+		//128x32 pixels		
+		j = 26;
+		i+=22;
+		
+		medicoes+=1;
+
+
+		if (i >= 70 || medicoes > 3){
+			gfx_mono_generic_draw_filled_rect(0, 0, 127, 31, GFX_PIXEL_CLR);
+			i = 0;
+			medicoes = 0;
+		}
+		
+		gfx_mono_generic_draw_rect(5, 5, 75, 26, GFX_PIXEL_SET);
+		gfx_mono_draw_line(0, j-2, 1, j-2, GFX_PIXEL_SET);
+		gfx_mono_draw_line(0, j-8, 1, j-8, GFX_PIXEL_SET);
+		gfx_mono_draw_line(0, j-14, 1, j-14, GFX_PIXEL_SET);
+
+		//gfx_mono_generic_draw_rect(5, 5, 75, 26, GFX_PIXEL_SET);
+		// no total 21 pixels para aproveitar
+		int range = 400/7;
+		// nos 3 primeiros pixels de 0 até 57 cm, depois de 57 até 114;
+		if (distancia <= 100){
+			j-=0; // no meio dos limites
+			gfx_mono_draw_filled_circle(i, j, 1, GFX_PIXEL_SET, GFX_WHOLE);
+		} else if (distancia > 100 && distancia <= 200){
+			j-= 5;
+			gfx_mono_draw_filled_circle(i, j, 1, GFX_PIXEL_SET, GFX_WHOLE);
+		} else if (distancia > 200 && distancia < 300){
+			j-=11;
+			gfx_mono_draw_filled_circle(i, j,  1, GFX_PIXEL_SET, GFX_WHOLE);
+		} else if (distancia >= 300 && distancia < 400){
+			j-=15;
+			gfx_mono_draw_filled_circle(i, j, 1, GFX_PIXEL_SET, GFX_WHOLE);
+		}
+		
+		//medicoes+=1;
+
+		}
+		sprintf(string, "%2.1f", distancia);
+		gfx_mono_generic_draw_filled_rect(80, 9, 127, 31, GFX_PIXEL_CLR);
+		gfx_mono_draw_string(string, 80,9, &sysfont);		
+		//tc_stop(TC1, 1);
+		
+	}
+	
+
 
 void trig_pulse(){
 	pio_set(TRIG_PIO, TRIG_PIO_IDX_MASK);
@@ -173,9 +268,12 @@ int main (void)
   // Init OLED
 	gfx_mono_ssd1306_init();
 
+
 	
 	while(1) {
 		if (but1_flag){
+			//TC_init(TC0, ID_TC1, 1, 1);
+			//tc_start(TC0, 1);
 			but1_flag = 0;
 			trig_pulse();		
 			draw(tempo);	
