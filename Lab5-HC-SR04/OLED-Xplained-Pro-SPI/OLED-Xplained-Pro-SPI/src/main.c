@@ -45,7 +45,7 @@ void echo_callback(void)
 	float t_alarme = 4/340;
 	if (echo_flag == 0){
 		echo_flag = 1;
-		RTT_init(8620, 11*8620, RTT_MR_ALMIEN);
+		RTT_init(8620, (int) t_alarme*8620, RTT_MR_ALMIEN);
 	} else{
 		echo_flag = 0;
 		tempo = rtt_read_timer_value(RTT);
@@ -182,6 +182,7 @@ void io_init(void)
 
 void draw (int ms){
 	char string[20];
+	char cm[4];
 	float t = (float) ms/freq;
 	float distancia = (340*t*100.0)/2.0;
 	float distancia_maior = distancia + 0.3;
@@ -200,23 +201,21 @@ void draw (int ms){
 	} else{
 		//128x32 pixels		
 		j = 26;
-		i+=22;
+		i+=15;
 		
 		medicoes+=1;
 
-
-		if (i >= 70 || medicoes > 3){
+		if (i >= 60 || medicoes > 3){
 			gfx_mono_generic_draw_filled_rect(0, 0, 127, 31, GFX_PIXEL_CLR);
-			i = 0;
 			medicoes = 0;
+			i = 15;
 		}
 		
-		gfx_mono_generic_draw_rect(5, 5, 75, 26, GFX_PIXEL_SET);
+		gfx_mono_generic_draw_rect(5, 5, 60, 26, GFX_PIXEL_SET);
 		gfx_mono_draw_line(0, j-2, 1, j-2, GFX_PIXEL_SET);
 		gfx_mono_draw_line(0, j-8, 1, j-8, GFX_PIXEL_SET);
 		gfx_mono_draw_line(0, j-14, 1, j-14, GFX_PIXEL_SET);
 
-		//gfx_mono_generic_draw_rect(5, 5, 75, 26, GFX_PIXEL_SET);
 		// no total 21 pixels para aproveitar
 		int range = 400/7;
 		// nos 3 primeiros pixels de 0 até 57 cm, depois de 57 até 114;
@@ -234,13 +233,15 @@ void draw (int ms){
 			gfx_mono_draw_filled_circle(i, j, 1, GFX_PIXEL_SET, GFX_WHOLE);
 		}
 		
-		//medicoes+=1;
+		sprintf(string, "%2.1f", distancia);
+		sprintf(cm, "cm");
+		gfx_mono_generic_draw_filled_rect(75, 9, 127, 31, GFX_PIXEL_CLR);
+		gfx_mono_draw_string(string, 80,5, &sysfont);
+		gfx_mono_draw_string(cm, 90, 20, &sysfont);
+		
 
 		}
-		sprintf(string, "%2.1f", distancia);
-		gfx_mono_generic_draw_filled_rect(80, 9, 127, 31, GFX_PIXEL_CLR);
-		gfx_mono_draw_string(string, 80,9, &sysfont);		
-		//tc_stop(TC1, 1);
+
 		
 	}
 	
@@ -272,8 +273,6 @@ int main (void)
 	
 	while(1) {
 		if (but1_flag){
-			//TC_init(TC0, ID_TC1, 1, 1);
-			//tc_start(TC0, 1);
 			but1_flag = 0;
 			trig_pulse();		
 			draw(tempo);	
