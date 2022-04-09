@@ -41,11 +41,12 @@ void but1_callback(void){
 
 
 void echo_callback(void)
-{	
-	float t_alarme = 4/340;
+{
+	float t_alarme = 8/340.0; // ida e volta (int) t_alarme*8620
+	int pulsos_alarme = 203; // t_alarme*8621
 	if (echo_flag == 0){
 		echo_flag = 1;
-		RTT_init(8620, (int) t_alarme*8620, RTT_MR_ALMIEN);
+		RTT_init(8621, 203, RTT_MR_ALMIEN);
 	} else{
 		echo_flag = 0;
 		tempo = rtt_read_timer_value(RTT);
@@ -53,36 +54,6 @@ void echo_callback(void)
 }
 
 
-void TC1_Handler(void) {
-	/**
-	* Devemos indicar ao TC que a interrupção foi satisfeita.
-	* Isso é realizado pela leitura do status do periférico
-	**/
-	volatile uint32_t status = tc_get_status(TC0, 1);
-
-	/** Muda o estado do LED (pisca) **/
-	i++;
-}
-
-
-void TC_init(Tc * TC, int ID_TC, int TC_CHANNEL, int freq){
-	uint32_t ul_div;
-	uint32_t ul_tcclks;
-	uint32_t ul_sysclk = sysclk_get_cpu_hz();
-
-	/* Configura o PMC */
-	pmc_enable_periph_clk(ID_TC);
-
-	/** Configura o TC para operar em  freq hz e interrupçcão no RC compare */
-	tc_find_mck_divisor(freq, ul_sysclk, &ul_div, &ul_tcclks, ul_sysclk);
-	tc_init(TC, TC_CHANNEL, ul_tcclks | TC_CMR_CPCTRG);
-	tc_write_rc(TC, TC_CHANNEL, (ul_sysclk / ul_div) / freq);
-
-	/* Configura NVIC*/
-	NVIC_SetPriority(ID_TC, 4);
-	NVIC_EnableIRQ((IRQn_Type) ID_TC);
-	tc_enable_interrupt(TC, TC_CHANNEL, TC_IER_CPCS);
-}
 
 
 static void RTT_init(float freqPrescale, uint32_t IrqNPulses, uint32_t rttIRQSource) {
@@ -182,15 +153,13 @@ void io_init(void)
 
 void draw (int ms){
 	char string[20];
-	char cm[4];
 	float t = (float) ms/freq;
-	float distancia = (340*t*100.0)/2.0;
-	float distancia_maior = distancia + 0.3;
-	float distancia_menor = distancia - 0.3;
-	
+	float distancia = ((340*t)/2.0)*100; // para centímetros
 
-	//(distancia >= 400)
-	if (rtt_alarm || (distancia >= 400)){
+	
+	//if (rtt_alarm || distancia > 400){ // não usei o rtt pois no atendimento o prof disse que estava com problemas
+	// e que precisava resolver antes de usar. Por enquanto isso não nos foi retornado;
+	if (distancia > 400 || distancia < 2){
 		i = 0;
 		gfx_mono_generic_draw_filled_rect(0, 0, 127, 31, GFX_PIXEL_CLR);
 		sprintf(string, "Erro!");
@@ -199,7 +168,7 @@ void draw (int ms){
 		delay_ms(200);
 		gfx_mono_generic_draw_filled_rect(0, 0, 127, 31, GFX_PIXEL_CLR);
 	} else{
-		//128x32 pixels		
+		//128x32 pixels
 		j = 26;
 		i+=15;
 		
@@ -217,7 +186,6 @@ void draw (int ms){
 		gfx_mono_draw_line(0, j-14, 1, j-14, GFX_PIXEL_SET);
 
 		// no total 21 pixels para aproveitar
-		int range = 400/7;
 		// nos 3 primeiros pixels de 0 até 57 cm, depois de 57 até 114;
 		if (distancia <= 100){
 			j-=0; // no meio dos limites
@@ -234,17 +202,16 @@ void draw (int ms){
 		}
 		
 		sprintf(string, "%2.1f", distancia);
-		sprintf(cm, "cm");
 		gfx_mono_generic_draw_filled_rect(75, 9, 127, 31, GFX_PIXEL_CLR);
 		gfx_mono_draw_string(string, 80,5, &sysfont);
-		gfx_mono_draw_string(cm, 90, 20, &sysfont);
+		gfx_mono_draw_string("cm", 90, 20, &sysfont);
 		
 
-		}
-
-		
 	}
+
 	
+}
+
 
 
 void trig_pulse(){
@@ -266,26 +233,25 @@ int main (void)
 	WDT->WDT_MR = WDT_MR_WDDIS;
 
 
-  // Init OLED
+	// Init OLED
 	gfx_mono_ssd1306_init();
 
+
+	
 
 	
 	while(1) {
 		if (but1_flag){
 			but1_flag = 0;
-			trig_pulse();		
-			draw(tempo);	
+			trig_pulse();
+			draw(tempo);
 
 		}
 		
 		pmc_sleep(SAM_PM_SMODE_SLEEP_WFI);
 
 		
-	}  
-		
-		
-}
+	}
 	
-
-			
+	
+}
