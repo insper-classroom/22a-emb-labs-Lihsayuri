@@ -11,12 +11,16 @@
 
 #define TASK_MONITOR_STACK_SIZE            (2048/sizeof(portSTACK_TYPE))
 #define TASK_MONITOR_STACK_PRIORITY        (tskIDLE_PRIORITY)
+
 #define TASK_LED_STACK_SIZE                (1024/sizeof(portSTACK_TYPE))
 #define TASK_LED_STACK_PRIORITY            (tskIDLE_PRIORITY)
+
 #define TASK_LED1_STACK_SIZE			   (1024/sizeof(portSTACK_TYPE))
 #define TASK_LED1_PRIORITY				   (tskIDLE_PRIORITY)
+
 #define TASK_LED2_STACK_SIZE			   (1024/sizeof(portSTACK_TYPE))
 #define TASK_LED2_PRIORITY				   (tskIDLE_PRIORITY)
+
 #define TASK_LED3_STACK_SIZE			   (1024/sizeof(portSTACK_TYPE))
 #define TASK_LED3_PRIORITY				   (tskIDLE_PRIORITY)
 
@@ -75,9 +79,11 @@ void but3_callback(void);
 
 
 SemaphoreHandle_t xSemaphore;
+SemaphoreHandle_t xSemaphore1;
 SemaphoreHandle_t xSemaphore2;
 SemaphoreHandle_t xSemaphore3;
-
+volatile int task1_over = 0;
+volatile int task2_over = 0;
 
 /************************************************************************/
 /* RTOS Hooks                                                           */
@@ -111,7 +117,7 @@ extern void vApplicationMallocFailedHook(void) { configASSERT( ( volatile void *
 void but1_callback(void){
 	printf("but_callback1 \n");
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	xSemaphoreGiveFromISR(xSemaphore, &xHigherPriorityTaskWoken);
+	xSemaphoreGiveFromISR(xSemaphore1, &xHigherPriorityTaskWoken);
 }
 
 void but2_callback(void){
@@ -131,6 +137,34 @@ void pin_toggle(Pio *pio, uint32_t mask){
 	pio_clear(pio, mask);
 	else
 	pio_set(pio,mask);
+}
+
+void pisca_led_1 (Pio *pio, const uint32_t mask, int n, int t) {
+	const TickType_t xDelay = t / portTICK_PERIOD_MS;
+
+	for (int i = 0; i < n; i++){
+		pio_clear(pio, mask);
+		vTaskDelay(t);
+		pio_set(pio, mask);
+		vTaskDelay(t);
+	}
+	
+	task1_over = 1;
+}
+
+
+void pisca_led (Pio *pio, const uint32_t mask, int n, int t) {
+	const TickType_t xDelay = t / portTICK_PERIOD_MS;
+
+	for (int i = 0; i < n; i++){
+		pio_clear(pio, mask);
+		vTaskDelay(t);
+		pio_set(pio, mask);
+		vTaskDelay(t);
+	}
+	
+	task2_over = 1;
+	
 }
 
 void configure_pio_output(Pio *pio, const uint32_t ul_mask, uint32_t ul_id, int estado){
@@ -186,46 +220,36 @@ static void task_led(void *pvParameters) {
 	}
 }
 
-
-
-void pisca_led (Pio *pio, const uint32_t mask, int n, int t) {
-	const TickType_t xDelay = t / portTICK_PERIOD_MS;
-	for (int i=0;i<n;i++){
-		pio_clear(pio, mask);
-		vTaskDelay(t);
-		pio_set(pio, mask);
-		vTaskDelay(t);
-	}
-}
-
 static void task_led1(void *pvParameters) {
 	configure_pio_output(LED1_PIO, LED1_PIO_IDX_MASK, LED1_PIO_ID, 1);
 	BTN_init_with_IRQ(BUT1_PIO, BUT1_PIO_ID, BUT1_PIO_IDX_MASK, but1_callback);
 	const TickType_t xDelay = 2000 / portTICK_PERIOD_MS;
 
 	for (;;) {
-	// aguarda semáforo com timeout de  500 ms
-		if( xSemaphoreTake(xSemaphore, ( TickType_t ) 500 / portTICK_PERIOD_MS) == pdTRUE ){
-			pin_toggle(LED1_PIO, LED1_PIO_IDX_MASK);
-		} else {
-			// time out
-		}
+			// aguarda semáforo com timeout de  500 ms
+			if( xSemaphoreTake(xSemaphore1, ( TickType_t ) 500 / portTICK_PERIOD_MS) == pdTRUE ){
+				pisca_led_1(LED1_PIO, LED1_PIO_IDX_MASK, 5, 300);
+			} else {
+				// time out
+			}
 	}
+	
 }
+
 
 static void task_led2(void *pvParameters) {
 	configure_pio_output(LED2_PIO, LED2_PIO_IDX_MASK, LED2_PIO_ID, 1);
-	BTN_init_with_IRQ(BUT2_PIO, BUT2_PIO_ID, BUT2_PIO_IDX_MASK, but2_callback);
+	//BTN_init_with_IRQ(BUT2_PIO, BUT2_PIO_ID, BUT2_PIO_IDX_MASK, but2_callback);
 	const TickType_t xDelay = 2000 / portTICK_PERIOD_MS;
 
 	for (;;) {
-		// aguarda semáforo com timeout de  500 ms
-		if( xSemaphoreTake(xSemaphore2, ( TickType_t ) 500 / portTICK_PERIOD_MS) == pdTRUE ){
-			pin_toggle(LED2_PIO, LED2_PIO_IDX_MASK);
-		} else {
-			// time out
+		if (task1_over){
+			// aguarda semáforo com timeout de  500 ms
+				pisca_led(LED2_PIO, LED2_PIO_IDX_MASK, 5, 300);
+				task1_over = 0;
 		}
 	}
+	
 }
 
 static void task_led3(void *pvParameters) {
@@ -234,26 +258,22 @@ static void task_led3(void *pvParameters) {
 	const TickType_t xDelay = 2000 / portTICK_PERIOD_MS;
 
 	for (;;) {
-		// aguarda semáforo com timeout de  500 ms
-		if( xSemaphoreTake(xSemaphore3, ( TickType_t ) 500 / portTICK_PERIOD_MS) == pdTRUE ){
-			pin_toggle(LED3_PIO, LED3_PIO_IDX_MASK);
+		if (task2_over){
+			if( xSemaphoreTake(xSemaphore3, ( TickType_t ) 500 / portTICK_PERIOD_MS) == pdTRUE ){
+				pisca_led(LED3_PIO, LED3_PIO_IDX_MASK, 3, 500);
 			} else {
-			// time out
+				// time out
+			}
+			
+			task2_over = 0;
+			
 		}
 	}
+	
+	
 }
 
-//static void task_led1(void *pvParameters){
-	//LED1_init(1);
-	//const TickType_t xDelay = 3000 / portTICK_PERIOD_MS;
-//
-	//for(;;){
-		////pin_toggle(LED1_PIO, LED1_PIO_IDX_MASK);
-		//pisca_led(LED1_PIO, LED1_PIO_IDX_MASK, 3, 100);
-		//vTaskDelay(xDelay);
-	//}
-	//
-//}
+
 
 /************************************************************************/
 /* main                                                                */
@@ -278,10 +298,13 @@ int main(void) {
     * does not attempt to use the semaphore before it is created!
     */
 	xSemaphore = xSemaphoreCreateBinary();
+	xSemaphore1 = xSemaphoreCreateBinary();
 	xSemaphore2 = xSemaphoreCreateBinary();
 	xSemaphore3 = xSemaphoreCreateBinary();
  
 	if (xSemaphore == NULL)
+		printf("Falha em criar o semaforo \n");
+	if (xSemaphore1 == NULL)
 		printf("Falha em criar o semaforo \n");
 	if (xSemaphore2 == NULL)
 		printf("Falha em criar o semaforo \n");
@@ -289,21 +312,26 @@ int main(void) {
 		printf("Falha em criar o semaforo \n");
 
 	/* Create task to monitor processor activity */
-	if (xTaskCreate(task_monitor, "Monitor", TASK_MONITOR_STACK_SIZE, NULL,
-	TASK_MONITOR_STACK_PRIORITY, NULL) != pdPASS) {
+	if (xTaskCreate(task_monitor, "Monitor", TASK_MONITOR_STACK_SIZE, NULL, TASK_MONITOR_STACK_PRIORITY, NULL) != pdPASS) {
 		printf("Failed to create Monitor task\r\n");
 	}
 
 	/* Create task to make led blink */
-	if (xTaskCreate(task_led, "Led", TASK_LED_STACK_SIZE, NULL,
-	TASK_LED_STACK_PRIORITY, NULL) != pdPASS) {
+	if (xTaskCreate(task_led, "Led", TASK_LED_STACK_SIZE, NULL, TASK_LED_STACK_PRIORITY, NULL) != pdPASS) {
 		printf("Failed to create test led task\r\n");
 	}
 	
-	xTaskCreate(task_led1, "Led1", TASK_LED1_STACK_SIZE, NULL, TASK_LED1_PRIORITY, NULL);
-	xTaskCreate(task_led2, "Led2", TASK_LED2_STACK_SIZE, NULL, TASK_LED2_PRIORITY, NULL);
-	xTaskCreate(task_led3, "Led3", TASK_LED3_STACK_SIZE, NULL, TASK_LED3_PRIORITY, NULL);
-
+	if (xTaskCreate(task_led1, "Led1", TASK_LED1_STACK_SIZE, NULL, TASK_LED1_PRIORITY, NULL) != pdPASS) {
+		printf("Failed to create test led task\r\n");
+	}
+	
+	if (xTaskCreate(task_led2, "Led2", TASK_LED2_STACK_SIZE, NULL, TASK_LED2_PRIORITY, NULL) != pdPASS) {
+		printf("Failed to create test led task\r\n");
+	}
+	
+	if (xTaskCreate(task_led3, "Led3", TASK_LED3_STACK_SIZE, NULL, TASK_LED3_PRIORITY, NULL) != pdPASS) {
+		printf("Failed to create test led task\r\n");
+	}
 
 	/* Start the scheduler. */
 	vTaskStartScheduler();
