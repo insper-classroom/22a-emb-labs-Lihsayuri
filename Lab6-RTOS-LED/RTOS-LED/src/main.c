@@ -223,12 +223,12 @@ static void task_led(void *pvParameters) {
 static void task_led1(void *pvParameters) {
 	configure_pio_output(LED1_PIO, LED1_PIO_IDX_MASK, LED1_PIO_ID, 1);
 	BTN_init_with_IRQ(BUT1_PIO, BUT1_PIO_ID, BUT1_PIO_IDX_MASK, but1_callback);
-	const TickType_t xDelay = 2000 / portTICK_PERIOD_MS;
+	const TickType_t xDelay = 1000 / portTICK_PERIOD_MS;
 
 	for (;;) {
 			// aguarda semáforo com timeout de  500 ms
 			if( xSemaphoreTake(xSemaphore1, ( TickType_t ) 500 / portTICK_PERIOD_MS) == pdTRUE ){
-				pisca_led_1(LED1_PIO, LED1_PIO_IDX_MASK, 5, 300);
+				pisca_led_1(LED1_PIO, LED1_PIO_IDX_MASK, 5, 200);
 			} else {
 				// time out
 			}
@@ -245,7 +245,7 @@ static void task_led2(void *pvParameters) {
 	for (;;) {
 		if (task1_over){
 			// aguarda semáforo com timeout de  500 ms
-				pisca_led(LED2_PIO, LED2_PIO_IDX_MASK, 5, 300);
+				pisca_led(LED2_PIO, LED2_PIO_IDX_MASK, 5, 200);
 				task1_over = 0;
 		}
 	}
@@ -260,13 +260,12 @@ static void task_led3(void *pvParameters) {
 	for (;;) {
 		if (task2_over){
 			if( xSemaphoreTake(xSemaphore3, ( TickType_t ) 500 / portTICK_PERIOD_MS) == pdTRUE ){
-				pisca_led(LED3_PIO, LED3_PIO_IDX_MASK, 3, 500);
+				pisca_led(LED3_PIO, LED3_PIO_IDX_MASK, 3, 200);
+				task2_over = 0;
 			} else {
 				// time out
 			}
-			
-			task2_over = 0;
-			
+						
 		}
 	}
 	
