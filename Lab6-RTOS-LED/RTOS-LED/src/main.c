@@ -164,6 +164,8 @@ void pisca_led (Pio *pio, const uint32_t mask, int n, int t) {
 	}
 	
 	task2_over = 1;
+	task1_over = 0;
+
 	
 }
 
