@@ -36,10 +36,10 @@
 #define TASK_LED_STACK_SIZE (1024 / sizeof(portSTACK_TYPE))
 #define TASK_LED_STACK_PRIORITY (tskIDLE_PRIORITY)
 
-#define TASK_BUT_STACK_SIZE (2048 / sizeof(portSTACK_TYPE))
+#define TASK_BUT_STACK_SIZE (4096 / sizeof(portSTACK_TYPE))
 #define TASK_BUT_STACK_PRIORITY (tskIDLE_PRIORITY)
 
-#define TASK_BUT1_STACK_SIZE (2048 / sizeof(portSTACK_TYPE))
+#define TASK_BUT1_STACK_SIZE (4096 / sizeof(portSTACK_TYPE))
 #define TASK_BUT1_STACK_PRIORITY (tskIDLE_PRIORITY)
 
 extern void vApplicationStackOverflowHook(xTaskHandle *pxTask,
@@ -128,11 +128,6 @@ void but1_callback(void) {
 /************************************************************************/
 
 
-void configure_pio_output(Pio *pio, const uint32_t ul_mask, uint32_t ul_id){
-	pmc_enable_periph_clk(ul_id);
-	pio_set_output(pio, ul_mask, 0, 0, 0);
-}
-
 void configure_pio_input(Pio *pio, const pio_type_t ul_type, const uint32_t ul_mask, const uint32_t ul_attribute, uint32_t ul_id){
 	pmc_enable_periph_clk(ul_id);
 	pio_configure(pio, ul_type, ul_mask, ul_attribute);
@@ -147,11 +142,15 @@ void configure_interruption(Pio *pio, uint32_t ul_id, const uint32_t ul_mask,  u
 	NVIC_SetPriority(ul_id, priority);
 }
 
+void LED_init(int estado){
+	pmc_enable_periph_clk(LED_PIO_ID);
+	pio_set_output(LED_PIO, LED_IDX_MASK, estado, 0, 0);
+};
+
 
 static void task_led(void *pvParameters) {
 
   LED_init(1);
-
   uint32_t msg = 0;
   uint32_t delayMs = 2000;
 
@@ -178,7 +177,9 @@ static void task_led(void *pvParameters) {
 static void task_but(void *pvParameters) {
 
   /* iniciliza botao */
-  BUT_init();
+  configure_pio_input(BUT_PIO, PIO_INPUT, BUT_PIO_PIN_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT_PIO_ID);
+  configure_interruption(BUT_PIO, BUT_PIO_ID, BUT_PIO_PIN_MASK, PIO_IT_FALL_EDGE, but_callback, 4);
+  
   configure_pio_input(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT1_PIO_ID);
   configure_interruption(BUT1_PIO, BUT1_PIO_ID, BUT1_PIO_IDX_MASK, PIO_IT_FALL_EDGE, but1_callback, 4);
 
@@ -202,7 +203,7 @@ static void task_but(void *pvParameters) {
 		delayTicks += 100;
 		/* envia nova frequencia para a task_led */
 		xQueueSend(xQueueLedFreq, (void *)&delayTicks, 10);
-		}
+	}
   }
 }
 
@@ -233,29 +234,6 @@ void pin_toggle(Pio *pio, uint32_t mask) {
     pio_clear(pio, mask);
   else
     pio_set(pio, mask);
-}
-
-void LED_init(int estado){
-	pmc_enable_periph_clk(LED_PIO_ID);
-	pio_set_output(LED_PIO, LED_IDX_MASK, estado, 0, 0);
-};
-
-
-static void BUT_init(void) {
-  /* conf botão como entrada */
-  pio_configure(BUT_PIO, PIO_INPUT, BUT_PIO_PIN_MASK,
-                PIO_PULLUP | PIO_DEBOUNCE);
-  pio_set_debounce_filter(BUT_PIO, BUT_PIO_PIN_MASK, 60);
-  pio_enable_interrupt(BUT_PIO, BUT_PIO_PIN_MASK);
-  pio_handler_set(BUT_PIO, BUT_PIO_ID, BUT_PIO_PIN_MASK, PIO_IT_FALL_EDGE,
-                  but_callback);
-
-  pio_get_interrupt_status(BUT_PIO);
-				  
-  /* configura prioridae */
-  NVIC_EnableIRQ(BUT_PIO_ID);
-  NVIC_SetPriority(BUT_PIO_ID, 4);
-
 }
 
 /************************************************************************/
