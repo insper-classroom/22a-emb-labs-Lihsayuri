@@ -449,7 +449,6 @@
       <Value>DEBUG</Value>
       <Value>BOARD=SAME70_XPLAINED</Value>
       <Value>ARM_MATH_CM7=true</Value>
-      <Value>printf=iprintf</Value>
       <Value>__FREERTOS__</Value>
       <Value>__SAME70Q21__</Value>
       <Value>scanf=iscanf</Value>
