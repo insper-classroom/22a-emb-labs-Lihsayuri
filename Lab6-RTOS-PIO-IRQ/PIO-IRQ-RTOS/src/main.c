@@ -5,6 +5,7 @@
 /* BOARD CONFIG                                                         */
 /************************************************************************/
 
+
 #define BUT_PIO PIOA
 #define BUT_PIO_ID ID_PIOA
 #define BUT_PIO_PIN 11
@@ -13,18 +14,13 @@
 #define BUT1_PIO			PIOD
 #define BUT1_PIO_ID			ID_PIOD
 #define BUT1_PIO_IDX		28
-#define BUT1_PIO_IDX_MASK	(1u << BUT1_PIO_IDX) 
+#define BUT1_PIO_IDX_MASK	(1u << BUT1_PIO_IDX)
 
 #define LED_PIO PIOC
 #define LED_PIO_ID ID_PIOC
 #define LED_PIO_IDX 8
 #define LED_IDX_MASK (1 << LED_PIO_IDX)
 
-/* Pinos do LED1 */
-#define LED1_PIO			PIOA
-#define LED1_PIO_ID			ID_PIOA
-#define LED1_PIO_IDX		0
-#define LED1_PIO_IDX_MASK	(1 << LED1_PIO_IDX)
 
 #define USART_COM_ID ID_USART1
 #define USART_COM USART1
@@ -33,14 +29,12 @@
 /* RTOS                                                                */
 /************************************************************************/
 
-#define TASK_LED_STACK_SIZE (1024 / sizeof(portSTACK_TYPE))
+#define TASK_LED_STACK_SIZE (4096 / sizeof(portSTACK_TYPE))
 #define TASK_LED_STACK_PRIORITY (tskIDLE_PRIORITY)
-
 #define TASK_BUT_STACK_SIZE (4096 / sizeof(portSTACK_TYPE))
 #define TASK_BUT_STACK_PRIORITY (tskIDLE_PRIORITY)
-
-#define TASK_BUT1_STACK_SIZE (4096 / sizeof(portSTACK_TYPE))
-#define TASK_BUT1_STACK_PRIORITY (tskIDLE_PRIORITY)
+#define TASK_TEST_STACK_SIZE (4096 / sizeof(portSTACK_TYPE))
+#define TASK_TEST_STACK_PRIORITY (tskIDLE_PRIORITY)
 
 extern void vApplicationStackOverflowHook(xTaskHandle *pxTask,
                                           signed char *pcTaskName);
@@ -53,20 +47,16 @@ extern void xPortSysTickHandler(void);
 /* recursos RTOS                                                        */
 /************************************************************************/
 
-/** Semaforo a ser usado pela task led */
-SemaphoreHandle_t xSemaphoreBut;
-
-SemaphoreHandle_t xSemaphoreBut1;
-
 /** Queue for msg log send data */
 QueueHandle_t xQueueLedFreq;
+QueueHandle_t xQueue_Dim;
+QueueHandle_t xQueue_Aum;
 
 /************************************************************************/
 /* prototypes local                                                     */
 /************************************************************************/
 
 void but_callback(void);
-static void BUT_init(void);
 void pin_toggle(Pio *pio, uint32_t mask);
 static void USART1_init(void);
 void LED_init(int estado);
@@ -114,19 +104,27 @@ extern void vApplicationMallocFailedHook(void) {
 /************************************************************************/
 
 void but_callback(void) {
+  uint32_t delayDec = 100;
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-  xSemaphoreGiveFromISR(xSemaphoreBut, &xHigherPriorityTaskWoken);
+  xQueueSendFromISR(xQueue_Dim, (void *)&delayDec, 10);
 }
 
 void but1_callback(void) {
+	uint32_t delayInc = 100;
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	xSemaphoreGiveFromISR(xSemaphoreBut1, &xHigherPriorityTaskWoken);
+	xQueueSendFromISR(xQueue_Aum, (void *)&delayInc, 10);
 }
 
-/************************************************************************/
-/* TASKS                                                                */
-/************************************************************************/
 
+// Funções auxiliares de inicialização
+
+
+void pin_toggle(Pio *pio, uint32_t mask) {
+	if (pio_get_output_data_status(pio, mask))
+	pio_clear(pio, mask);
+	else
+	pio_set(pio, mask);
+}
 
 void configure_pio_input(Pio *pio, const pio_type_t ul_type, const uint32_t ul_mask, const uint32_t ul_attribute, uint32_t ul_id){
 	pmc_enable_periph_clk(ul_id);
@@ -148,24 +146,29 @@ void LED_init(int estado){
 };
 
 
+/************************************************************************/
+/* TASKS                                                                */
+/************************************************************************/
+
 static void task_led(void *pvParameters) {
 
   LED_init(1);
+
   uint32_t msg = 0;
   uint32_t delayMs = 2000;
 
   /* tarefas de um RTOS não devem retornar */
   for (;;) {
     /* verifica se chegou algum dado na queue, e espera por 0 ticks */
-    if (xQueueReceive(xQueueLedFreq, &msg, (TickType_t)0)) {
+    if (xQueueReceive(xQueueLedFreq, &msg, (TickType_t) 0)) {
       /* chegou novo valor, atualiza delay ! */
       /* aqui eu poderia verificar se msg faz sentido (se esta no range certo)
        */
       /* converte ms -> ticks */
       delayMs = msg / portTICK_PERIOD_MS;
-      printf("delay = %d \n", delayMs);
+      printf("Task do LED: %d \n", delayMs);
     }
-
+	
     /* pisca LED */
     pin_toggle(LED_PIO, LED_IDX_MASK);
 
@@ -184,26 +187,27 @@ static void task_but(void *pvParameters) {
   configure_interruption(BUT1_PIO, BUT1_PIO_ID, BUT1_PIO_IDX_MASK, PIO_IT_FALL_EDGE, but1_callback, 4);
 
   uint32_t delayTicks = 2000;
-
+  uint32_t delay_Dim = 0;
+  uint32_t delay_Aum = 0;
+  
   for (;;) {
-    /* aguarda por tempo inderteminado até a liberacao do semaforo */
-    if (xSemaphoreTake(xSemaphoreBut, 1000)) {
-      /* atualiza frequencia */
-      delayTicks -= 100;
 
-      /* envia nova frequencia para a task_led */
-      xQueueSend(xQueueLedFreq, (void *)&delayTicks, 10);
-
-      /* garante range da freq. */
-      if (delayTicks == 100) {
-        delayTicks = 900;
-      }
-    } if (xSemaphoreTake(xSemaphoreBut1, 1000)) {
-		/* atualiza frequencia */
-		delayTicks += 100;
-		/* envia nova frequencia para a task_led */
-		xQueueSend(xQueueLedFreq, (void *)&delayTicks, 10);
-	}
+	  if (xQueueReceive(xQueue_Dim, (void *)&delay_Dim, 10)) {
+		  delayTicks -= delay_Dim;
+		  printf("Task do botão: %d \n", delayTicks);
+		  if (delayTicks == 100) {
+			  delayTicks = 2000;
+		  }
+		  
+		  xQueueSend(xQueueLedFreq, (void *)&delayTicks, 10);
+	  }
+	  
+	  if (xQueueReceive(xQueue_Aum, (void *)&delay_Aum, 10)) {
+		   delayTicks += delay_Aum;
+		   printf("Task do botão: %d \n", delayTicks);
+		   xQueueSend(xQueueLedFreq, (void *)&delayTicks, 10);
+	  }
+	  
   }
 }
 
@@ -229,12 +233,6 @@ static void configure_console(void) {
   setbuf(stdout, NULL);
 }
 
-void pin_toggle(Pio *pio, uint32_t mask) {
-  if (pio_get_output_data_status(pio, mask))
-    pio_clear(pio, mask);
-  else
-    pio_set(pio, mask);
-}
 
 /************************************************************************/
 /* main                                                                 */
@@ -250,35 +248,30 @@ int main(void) {
   sysclk_init();
   board_init();
   configure_console();
-
-  /* Attempt to create a semaphore. */
-  xSemaphoreBut = xSemaphoreCreateBinary();
-  if (xSemaphoreBut == NULL)
-    printf("falha em criar o semaforo \n");
 	
-  xSemaphoreBut1 = xSemaphoreCreateBinary();
-  if (xSemaphoreBut1 == NULL)
-	printf("falha em criar o semaforo \n");
-
   /* cria queue com 32 "espacos" */
   /* cada espaço possui o tamanho de um inteiro*/
   xQueueLedFreq = xQueueCreate(32, sizeof(uint32_t));
   if (xQueueLedFreq == NULL)
     printf("falha em criar a queue \n");
+	
+  xQueue_Dim = xQueueCreate(32, sizeof(uint32_t));
+  if (xQueue_Dim == NULL)
+	printf("falha em criar a queue \n");
+	
+  xQueue_Aum = xQueueCreate(32, sizeof(uint32_t));
+  if (xQueue_Aum == NULL)
+	 printf("falha em criar a queue \n");
 
   /* Create task to make led blink */
-  if (xTaskCreate(task_led, "Led", TASK_LED_STACK_SIZE, NULL,
-                  TASK_LED_STACK_PRIORITY, NULL) != pdPASS) {
+  if (xTaskCreate(task_led, "Led", TASK_LED_STACK_SIZE, NULL, TASK_LED_STACK_PRIORITY, NULL) != pdPASS) {
     printf("Failed to create test led task\r\n");
-  }
-
-
-  /* Create task to monitor processor activity */
-  if (xTaskCreate(task_but, "BUT", TASK_BUT_STACK_SIZE, NULL,
-                  TASK_BUT_STACK_PRIORITY, NULL) != pdPASS) {
-    printf("Failed to create UartTx task\r\n");
-  }
+  } 
   
+  /* Create task to monitor processor activity */
+  if (xTaskCreate(task_but, "BUT", TASK_BUT_STACK_SIZE, NULL, TASK_BUT_STACK_PRIORITY, NULL) != pdPASS) {
+    printf("Failed to create UartTx task\r\n");
+  } 
 
   /* Start the scheduler. */
   vTaskStartScheduler();
