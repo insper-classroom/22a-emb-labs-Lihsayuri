@@ -117,38 +117,36 @@ static void task_proc(void *pvParameters){
 
 	// variável para recever dados da fila
 	adcData adc;
-	uint valores[5];
+	uint valores[10];
 	int i = 0;
 	float media;
-	uint temp;
 
 	while (1) {
 		if (xQueueReceive(xQueueADCProc, &(adc), 1000)) {
 			valores[i] = adc.value;
 			i++;
 			
-		} while (i >= 5){
+		} while (i >= 10){
 			uint soma = 0;
 
-			for (int j = 0; j < 5; j++){
-				//printf("VALOR J: %d \n", valores[j]);
+			for (int j = 0; j < 10; j++){
+				printf("VALOR J: %d \n", valores[j]);
 				soma += valores[j];
 			}
 						
-			//printf("SOMA: %d \n", soma);
+			printf("SOMA: %d \n", soma);
 
 			
-			media = (soma/5.0);
+			media = (soma/10.0);
 
 			xQueueSend(xQueueADC, (void *)&media, 10);
 			
-			for (int j = 0; j < 4; j++){
-				temp = valores[j+1];
-				valores[j] = temp;
+			for (int j = 0; j < 9; j++){
+				valores[j] = valores[j+1];
 			}
 			
 			if (xQueueReceive(xQueueADCProc, &(adc), 1000)){
-				valores[4] = adc.value;
+				valores[9] = adc.value;
 			}
 			
 		}
